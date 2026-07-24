@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -72,12 +73,13 @@ export const LoginScreen = () => {
 
           {/* Botón Ingresar */}
           <div className="pt-2 flex justify-center">
-            <button
+            <Link
+              to="/clientes"
               type="submit"
               className="px-10 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-2xl hover:bg-white active:scale-95 transition-all text-base shadow-sm"
             >
               Ingresar
-            </button>
+            </Link>
           </div>
         </form>
       </div>

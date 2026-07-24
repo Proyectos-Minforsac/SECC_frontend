@@ -43,7 +43,13 @@ export default function TecnicosScreen() {
         </div>
 
         {/* Barra de Búsqueda y Filtros */}
-        <SearchBar items={tecnicos} searchKey="nombre" onFiltrar={setTecnicosFiltrados} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
+          <SearchBar
+            items={tecnicos}
+            searchKey="nombre"
+            onFiltrar={setTecnicosFiltrados}
+          />
+        </div>
 
         {loading ? (
           <div className="flex flex-col justify-center items-center h-64">

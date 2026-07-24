@@ -3,13 +3,20 @@ import SideBarComponent from '../components/SideBar';
 import SearchBar from '../components/SearchBar';
 import { obtenerClientes, type Cliente } from '../services/clientes';
 import LoadingSpinner from "../components/LoadingSpinner";
+import ClienteCard from '../components/ClienteCard';
+import ClienteAgregarEditarModal from '../components/ClienteModals';
 
 export const ClientesScreen = () => {
   // Lista de clientes
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [clientesFiltrados, setClientesFiltrados] = useState<Cliente[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [clienteNombre, setClienteNombre] = useState("");
+  const [clienteDireccion, setClienteDireccion] = useState("");
+  const [clienteRuc, setClienteRuc] = useState("");
+  const [clienteCorreo, setClienteCorreo] = useState("");
 
   useEffect(() => {
     const cargarClientes = async () => {
@@ -38,9 +45,58 @@ export const ClientesScreen = () => {
         {/* Cabecera: Título y Botón Agregar */}
         <div className="flex items-center gap-4 mb-8">
           <h1 className="text-4xl font-bold text-black tracking-tight">Clientes</h1>
-          <button className="px-5 py-1.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all flex items-center gap-1 shadow-sm">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-5 py-1.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all flex items-center gap-1 shadow-sm cursor-pointer">
             Agregar
           </button>
+
+          <ClienteAgregarEditarModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            title='Nuevo cliente'
+          >
+            <p className='text-white'>Nuevo contenido</p>
+            <div>
+              <input
+                type="text"
+                placeholder="Nombre o razón social"
+                value={clienteNombre}
+                onChange={(e) => setClienteNombre(e.target.value)}
+                className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm my-3"
+              />
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Dirección"
+                value={clienteDireccion}
+                onChange={(e) => setClienteDireccion(e.target.value)}
+                className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm my-3"
+              />
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="R.U.C"
+                value={clienteRuc}
+                onChange={(e) => setClienteRuc(e.target.value)}
+                className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm my-3"
+              />
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Correo electrónico"
+                value={clienteCorreo}
+                onChange={(e) => setClienteCorreo(e.target.value)}
+                className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm my-3"
+              />
+            </div>
+          </ClienteAgregarEditarModal>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
@@ -66,41 +122,13 @@ export const ClientesScreen = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
             {clientesFiltrados.map((cliente) => (
               <div key={cliente.cliente_id} className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
-
-                <div className="bg-[#222861] p-4 flex justify-end gap-2">
-                  <button className="bg-[#E2E4E9] text-gray-800 text-xs font-medium px-3 py-1 rounded-full hover:bg-white transition-colors">
-                    Editar
-                  </button>
-
-                  <button className="bg-[#E2E4E9] text-gray-800 text-xs font-medium px-3 py-1 rounded-full hover:bg-white transition-colors">
-                    Eliminar
-                  </button>
-                </div>
-
-                {/* Contenido */}
-                <div className="p-5 flex flex-col gap-2 text-black">
-                  <h2 className="text-xl font-bold">{cliente.nombre}</h2>
-
-                  <p>
-                    <span className="font-semibold">Correo:</span>{" "}
-                    {cliente.correo_electronico}
-                  </p>
-
-                  <p>
-                    <span className="font-semibold">Dirección:</span>{" "}
-                    {cliente.direccion}
-                  </p>
-
-                  <p>
-                    <span className="font-semibold">Tipo Persona:</span>{" "}
-                    {cliente.tipo_persona}
-                  </p>
-
-                  <button className="mt-4 w-full bg-[#343C8F] text-white py-3 rounded-xl hover:bg-[#222861] transition-all">
-                    Agregar solicitud
-                  </button>
-                </div>
-
+                <ClienteCard
+                  key={cliente.cliente_id}
+                  nombre={cliente.nombre}
+                  correo_electronico={cliente.correo_electronico}
+                  direccion={cliente.direccion}
+                  tipo_persona={cliente.tipo_persona}
+                />
               </div>
             ))}
           </div>
