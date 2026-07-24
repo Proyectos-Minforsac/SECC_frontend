@@ -7,9 +7,11 @@ const overrideStyles = {
 };
 
 export default function LoadingSpinner() {
-  const [isLoading, setItsLoading] = useState(true);
-  const [color, setColor] = useState("#222861")
   
+  // Características del spinner
+  const [isLoading] = useState(true);
+  const color = "#222861"
+
   return (
     <>
       <div className="loader-container">

@@ -1,4 +1,4 @@
-import { X, MoreHorizontal, Pencil } from 'lucide-react';
+import { X, Pencil } from 'lucide-react';
 
 export default function CardItem({id_item, nombre, tipo, cantidad, total, onDelete}:{id_item:number, nombre:string, tipo:string, cantidad:GLfloat, total:GLfloat, onDelete: (id:number) => void}) {
      return(
