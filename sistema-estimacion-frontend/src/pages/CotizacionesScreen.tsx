@@ -1,23 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Plus, ChevronDown, List } from 'lucide-react';
 import SideBarComponent from '../components/SideBar';
 import CardItem from '../components/CotizacionItem';
 import { obtenerClientes, type Cliente } from '../services/clientes';
 import { useNavigate } from 'react-router-dom';
 import type { CotizacionItem } from '../types/types';
 
-export const CotizacionesScreen: React.FC = () => {
+export const CotizacionesScreen = () => {
 
   const navigate = useNavigate();
 
   // Estados globales para los datos del cliente
   const [clienteNombre, setClienteNombre] = useState('');
-  const [direccion, setDireccion] = useState('');
+  const [clienteDireccion, setClienteDireccion] = useState('');
   const [tipoPersona, setTipoPersona] = useState('');
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [sugerencias, setSugerencias] = useState<Cliente[]>([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   const inputClienteRef = useRef<HTMLInputElement>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   // const [ruc, setRuc] = useState('');
 
   // Estados del formulario para agregar un ítem
@@ -75,7 +76,7 @@ export const CotizacionesScreen: React.FC = () => {
 
   const seleccionarCliente = (cliente: Cliente) => {
     setClienteNombre(cliente.nombre);
-    setDireccion(cliente.direccion);
+    setClienteDireccion(cliente.direccion);
     setTipoPersona(cliente.tipo_persona);
     setMostrarSugerencias(false);
   };
@@ -124,7 +125,7 @@ export const CotizacionesScreen: React.FC = () => {
 
   // Envío a documento PDF
   const enviarParaDocumento = () => {
-    if (!clienteNombre || !direccion || !tipoPersona) {
+    if (!clienteNombre || !clienteDireccion || !tipoPersona) {
       alert('Por favor completa los campos principales del ítem.');
       return;
     }
@@ -133,7 +134,7 @@ export const CotizacionesScreen: React.FC = () => {
       state: {
         data: {
           cliente: clienteNombre,
-          direccion: direccion,
+          direccion: clienteDireccion,
           tipo_persona: tipoPersona,
           fecha: new Date().toISOString().split("T")[0],
           solicitante: 'Juan Perez',
@@ -208,8 +209,8 @@ export const CotizacionesScreen: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Dirección"
-                      value={direccion}
-                      onChange={(e) => setDireccion(e.target.value)}
+                      value={clienteDireccion}
+                      onChange={(e) => setClienteDireccion(e.target.value)}
                       className="w-full bg-white rounded-full px-4 py-2 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
                       readOnly
                     />
@@ -308,7 +309,7 @@ export const CotizacionesScreen: React.FC = () => {
               </div>
 
               {/* DESPLEGABLE: Detalles específicos del ítem */}
-              {/* <div className="mt-2 space-y-3">
+              <div className="mt-2 space-y-3">
                 <button
                   type="button"
                   onClick={() => setIsDetailsOpen(!isDetailsOpen)}
@@ -319,9 +320,8 @@ export const CotizacionesScreen: React.FC = () => {
                     <span className="text-sm font-medium">Detalles específicos del ítem</span>
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 text-black transition-transform duration-300 ${
-                      isDetailsOpen ? 'rotate-180' : 'rotate-0'
-                    }`}
+                    className={`w-4 h-4 text-black transition-transform duration-300 ${isDetailsOpen ? 'rotate-180' : 'rotate-0'
+                      }`}
                   />
                 </button>
 
@@ -356,7 +356,7 @@ export const CotizacionesScreen: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div> */}
+              </div>
 
               {/* BOTÓN PARA AGREGAR EL ÍTEM A LA LISTA */}
               <div className="pt-2 flex justify-end">
@@ -383,15 +383,15 @@ export const CotizacionesScreen: React.FC = () => {
                   </div>
                 ) : (
                   items.map((item) => (
-                  <CardItem
-                    key={item.id}
-                    id_item={item.id}
-                    nombre={item.nombre}
-                    tipo={item.tipo}
-                    cantidad={item.cantidad}
-                    total={item.total}
-                    onDelete={handleDeleteItem}
-                  />
+                    <CardItem
+                      key={item.id}
+                      id_item={item.id}
+                      nombre={item.nombre}
+                      tipo={item.tipo}
+                      cantidad={item.cantidad}
+                      total={item.total}
+                      onDelete={handleDeleteItem}
+                    />
                   ))
                 )}
               </div>

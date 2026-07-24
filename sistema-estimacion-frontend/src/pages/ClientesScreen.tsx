@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import SideBarComponent from '../components/SideBar';
 import SearchBar from '../components/SearchBar';
 import { obtenerClientes, type Cliente } from '../services/clientes';
+import LoadingSpinner from "../components/LoadingSpinner";
 
-export const ClientesScreen: React.FC = () => {
-  // Estado para simular la lista de clientes
+export const ClientesScreen = () => {
+  // Lista de clientes
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [clientesFiltrados, setClientesFiltrados] = useState<Cliente[]>([]);
 
   useEffect(() => {
     const cargarClientes = async () => {
       try {
         const data = await obtenerClientes();
         setClientes(data);
+        setClientesFiltrados(data);
       } catch (error) {
         console.error('Error al cargar clientes', error);
       } finally {
@@ -39,22 +43,28 @@ export const ClientesScreen: React.FC = () => {
           </button>
         </div>
 
-        {/* Barra de Búsqueda y Filtros */}
-        <SearchBar />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
+          <SearchBar
+            items={clientes}
+            searchKey="nombre"
+            onFiltrar={setClientesFiltrados}
+          />
+        </div>
 
         {loading ? (
-          <div className="flex justify-center items-center h-64">
+          <div className="flex flex-col justify-center items-center h-64">
+            <LoadingSpinner />
             <p className="text-lg text-gray-600">Cargando clientes...</p>
           </div>
-        ) : clientes.length === 0 ? (
+        ) : (clientesFiltrados.length === 0) ? (
           <div className="flex justify-center items-center h-64">
             <p className="text-lg text-gray-500 italic">
-              No hay clientes registrados.
+              {clientes.length === 0 ? "No hay clientes registrados." : "No se encontraron clientes en la búsqueda"}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
-            {clientes.map((cliente) => (
+            {clientesFiltrados.map((cliente) => (
               <div key={cliente.cliente_id} className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
 
                 <div className="bg-[#222861] p-4 flex justify-end gap-2">

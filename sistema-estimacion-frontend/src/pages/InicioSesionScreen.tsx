@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-export const LoginScreen: React.FC = () => {
+export const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -11,7 +11,7 @@ export const LoginScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-[#DCE4F3] flex flex-col md:flex-row items-center justify-center gap-12 p-6 font-sans">
-      
+
       {/* Sección Izquierda: Logo y Título */}
       <div className="flex flex-col items-center max-w-sm text-center">
         {/* Contenedor del Logo imitando el recuadro blanco de la imagen */}
@@ -32,7 +32,7 @@ export const LoginScreen: React.FC = () => {
             <span>inforsac</span>
           </div>
         </div>
-        
+
         {/* Subtítulo */}
         <h1 className="text-2xl md:text-3xl font-medium text-gray-900 leading-tight">
           Gestión de Servicios Técnicos
@@ -44,7 +44,7 @@ export const LoginScreen: React.FC = () => {
         <h2 className="text-xl md:text-2xl font-normal mb-6 text-left">
           Iniciar sesión
         </h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Campo Correo Electrónico */}
           <div>
