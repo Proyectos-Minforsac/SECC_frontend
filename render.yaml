@@ -1,10 +1,16 @@
-services:
-  - type: web
-    runtime: static
-    name: secc_minforsac
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+# Exported from Render on 2026-07-24T20:33:24Z
+version: "1"
+projects:
+- name: Sistema Estimación Costos Tesis
+  environments:
+  - name: Production
+    databases:
+    - name: sistema-estimacion-bd
+      databaseName: sistema_estimaciones_bd
+      user: sistema_estimaciones_bd_user
+      plan: free
+      region: oregon
+      ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+      postgresMajorVersion: "18"
