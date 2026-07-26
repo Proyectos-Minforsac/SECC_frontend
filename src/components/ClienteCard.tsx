@@ -1,14 +1,15 @@
 interface ClienteProps {
   nombre: string,
-  correo_electronico: string,
   direccion: string,
+  ruc: string,
+  correo_electronico: string,
   tipo_persona: string
 }
 
-export default function ClienteCard({ nombre, correo_electronico, direccion, tipo_persona }: ClienteProps) {
+export default function ClienteCard({ nombre, direccion, ruc, correo_electronico, tipo_persona }: ClienteProps) {
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl overflow-hidden flex flex-col">
         <div className="bg-[#222861] p-4 flex justify-end gap-2">
           <button className="bg-[#E2E4E9] text-gray-800 text-xs font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
             Editar
@@ -31,6 +32,11 @@ export default function ClienteCard({ nombre, correo_electronico, direccion, tip
           <p>
             <span className="font-semibold">Dirección:</span>{" "}
             {direccion}
+          </p>
+
+          <p>
+            <span className="font-semibold">R.U.C:</span>{" "}
+            {ruc}
           </p>
 
           <p>

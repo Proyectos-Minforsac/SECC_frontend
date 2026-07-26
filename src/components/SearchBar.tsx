@@ -1,26 +1,11 @@
-interface SearchBarProps<T> {
-  items: T[];
-  searchKey: keyof T;
-  onFiltrar: (itemFiltrados: T[]) => void;
+interface SearchBarProps {
+  onBuscar: (texto: string) => void;
 }
 
-export default function SearchBar<T>({ items, searchKey, onFiltrar }: SearchBarProps<T>) {
+export default function SearchBar({ onBuscar }: SearchBarProps) {
   const manejarBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const valor = e.target.value.toLowerCase();
-
-    const filtrados = items.filter((item) => {
-      const valorPropiedad = item[searchKey];
-
-      // Verificar texto o número
-      if (typeof valorPropiedad === 'string' || typeof valorPropiedad === 'number') {
-        return valorPropiedad.toString().toLowerCase().includes(valor);
-      }
-      return false;
-    });
-
-    onFiltrar(filtrados);
+    onBuscar(e.target.value);
   }
-
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-10 max-w-4xl">
