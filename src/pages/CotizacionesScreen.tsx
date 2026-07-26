@@ -11,13 +11,13 @@ export const CotizacionesScreen = () => {
   const navigate = useNavigate();
 
   // Estados globales para los datos del cliente
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
   const [clienteNombre, setClienteNombre] = useState('');
   const [clienteDireccion, setClienteDireccion] = useState('');
   const [tipoPersona, setTipoPersona] = useState('');
-  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [sugerencias, setSugerencias] = useState<Cliente[]>([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
-  const inputClienteRef = useRef<HTMLInputElement>(null);
+  const contenedorClienteRef = useRef<HTMLDivElement>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   // const [ruc, setRuc] = useState('');
 
@@ -32,23 +32,36 @@ export const CotizacionesScreen = () => {
   const [items, setItems] = useState<CotizacionItem[]>([]);
 
   useEffect(() => {
-    const cargarClientes = async () => {
+    const cargarSugerencias = async () => {
+      if (!clienteNombre.trim()) {
+        setClienteDireccion("");
+        setTipoPersona("");
+        setSugerencias([]);
+        setMostrarSugerencias(false);
+        return;
+      }
+
+      if (clienteSeleccionado && clienteNombre === clienteSeleccionado.nombre) {
+        return;
+      }
+
       try {
-        const data = await obtenerClientes();
-        setClientes(data);
+        const data = await obtenerClientes(1, 6, clienteNombre);
+        setSugerencias(data.clientes);
+        setMostrarSugerencias(data.clientes.length > 0);
       } catch (error) {
         console.error('Error al cargar clientes', error);
       }
     };
 
-    cargarClientes();
-  }, []);
+    cargarSugerencias();
+  }, [clienteNombre]);
 
   useEffect(() => {
     const manejarClicFuera = (event: MouseEvent) => {
       if (
-        inputClienteRef.current &&
-        !inputClienteRef.current.contains(event.target as Node)
+        contenedorClienteRef.current &&
+        !contenedorClienteRef.current.contains(event.target as Node)
       ) {
         setMostrarSugerencias(false);
       }
@@ -58,23 +71,8 @@ export const CotizacionesScreen = () => {
     return () => document.removeEventListener('mousedown', manejarClicFuera);
   }, []);
 
-  useEffect(() => {
-    if (!clienteNombre.trim()) {
-      setSugerencias([]);
-      setMostrarSugerencias(false);
-      return;
-    }
-
-    const texto = clienteNombre.toLowerCase();
-    const filtrados = clientes.filter((cliente) =>
-      cliente.nombre.toLowerCase().includes(texto)
-    );
-
-    setSugerencias(filtrados.slice(0, 6));
-    setMostrarSugerencias(filtrados.length > 0);
-  }, [clienteNombre, clientes]);
-
   const seleccionarCliente = (cliente: Cliente) => {
+    setClienteSeleccionado(cliente);
     setClienteNombre(cliente.nombre);
     setClienteDireccion(cliente.direccion);
     setTipoPersona(cliente.tipo_persona);
@@ -175,13 +173,18 @@ export const CotizacionesScreen = () => {
                 {/* Grid de 3 inputs en la misma fila */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                   {/* Nombre / Razón Social (5 cols) */}
-                  <div className="md:col-span-5 relative">
+                  <div
+                    ref={contenedorClienteRef}
+                    className="md:col-span-5 relative"
+                  >
                     <input
-                      ref={inputClienteRef}
                       type="text"
                       placeholder="Nombre/Razón Social"
                       value={clienteNombre}
-                      onChange={(e) => setClienteNombre(e.target.value)}
+                      onChange={(e) => {
+                        setClienteSeleccionado(null);
+                        setClienteNombre(e.target.value);
+                      }}
                       onFocus={() => clienteNombre.trim() && setMostrarSugerencias(true)}
                       className="w-full bg-white rounded-full px-4 py-2 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
                     />

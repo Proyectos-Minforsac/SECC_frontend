@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useSearchParams } from 'react-router-dom';
 import SideBarComponent from "../components/SideBar"
 import SearchBar from "../components/SearchBar";
 import { obtenerTecnicos, type Tecnico } from "../services/tecnicos";
@@ -10,7 +11,20 @@ export default function TecnicosScreen() {
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [busqueda, setBusqueda] = useState("");
   const [tecnicosFiltrados, setTecnicosFiltrados] = useState<Tecnico[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [paginaActual, setPaginaActual] = useState(
+    Number(searchParams.get("page")) || 1
+  );
+
+  useEffect(() => {
+    setSearchParams({
+      page: paginaActual.toString(),
+      limit: "9",
+      search: busqueda,
+    })
+  }, [paginaActual, busqueda, setSearchParams]);
 
   useEffect(() => {
     const cargarTecnicos = async () => {
@@ -45,9 +59,10 @@ export default function TecnicosScreen() {
         {/* Barra de Búsqueda y Filtros */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
           <SearchBar
-            items={tecnicos}
-            searchKey="nombre"
-            onFiltrar={setTecnicosFiltrados}
+            onBuscar={(texto) => {
+              setBusqueda(texto);
+              setPaginaActual(1);
+            }}
           />
         </div>
 
