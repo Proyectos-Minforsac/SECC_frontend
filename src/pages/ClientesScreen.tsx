@@ -281,7 +281,7 @@ export const ClientesScreen = () => {
                 <button
                   type='submit'
                   className='px-5 py-1.5 bg-[#E2E4E9] text-gray-800 text-sm font-medium rounded-full hover:bg-white transition-colors items-center gap-1 shadow-sm cursor-pointer'>
-                  {clienteEditando ? "Guardar" : "Agregar"}
+                  {clienteEditando ? "Guardar" : "Agregar cliente"}
                 </button>
               </div>
             </form>
