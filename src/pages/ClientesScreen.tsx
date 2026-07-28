@@ -5,7 +5,7 @@ import SearchBar from '../components/SearchBar';
 import { obtenerClientes, crearCliente, editarCliente, eliminarCliente, type Cliente } from '../services/clientes';
 import LoadingSpinner from "../components/LoadingSpinner";
 import ClienteCard from '../components/ClienteCard';
-import ClienteAgregarEditarModal from '../components/ClienteModals';
+import AgregarEditarModal from '../components/Modal';
 import PaginacionComponente from '../components/Paginacion';
 
 export const ClientesScreen = () => {
@@ -197,7 +197,7 @@ export const ClientesScreen = () => {
             Agregar
           </button>
 
-          <ClienteAgregarEditarModal
+          <AgregarEditarModal
             isOpen={isModalOpen}
             onClose={cerrarModal}
             title={clienteEditando ? 'Editar cliente' : 'Nuevo cliente'}
@@ -281,11 +281,11 @@ export const ClientesScreen = () => {
                 <button
                   type='submit'
                   className='px-5 py-1.5 bg-[#E2E4E9] text-gray-800 text-sm font-medium rounded-full hover:bg-white transition-colors items-center gap-1 shadow-sm cursor-pointer'>
-                  {clienteEditando ? "Guardar" : "Agregar cliente"}
+                  {clienteEditando ? "Guardar cliente" : "Agregar cliente"}
                 </button>
               </div>
             </form>
-          </ClienteAgregarEditarModal>
+          </ AgregarEditarModal>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">

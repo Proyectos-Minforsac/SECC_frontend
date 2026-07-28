@@ -6,6 +6,8 @@ import { obtenerClientes, type Cliente } from '../services/clientes';
 import { useNavigate } from 'react-router-dom';
 import type { CotizacionItem } from '../types/types';
 
+// const TIPO_COTIZACION = ['Producto', 'Servicio', 'Alquiler', 'Impresora'];
+
 export const CotizacionesScreen = () => {
 
   const navigate = useNavigate();
@@ -14,12 +16,12 @@ export const CotizacionesScreen = () => {
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
   const [clienteNombre, setClienteNombre] = useState('');
   const [clienteDireccion, setClienteDireccion] = useState('');
-  const [tipoPersona, setTipoPersona] = useState('');
+  // const [clienteTipoPersona, setClienteTipoPersona] = useState('');
   const [sugerencias, setSugerencias] = useState<Cliente[]>([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   const contenedorClienteRef = useRef<HTMLDivElement>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  // const [ruc, setRuc] = useState('');
+  const [clienteRuc, setClienteRuc] = useState('');
 
   // Estados del formulario para agregar un ítem
   const [tipo, setTipo] = useState('');
@@ -35,7 +37,7 @@ export const CotizacionesScreen = () => {
     const cargarSugerencias = async () => {
       if (!clienteNombre.trim()) {
         setClienteDireccion("");
-        setTipoPersona("");
+        setClienteRuc("");
         setSugerencias([]);
         setMostrarSugerencias(false);
         return;
@@ -75,7 +77,7 @@ export const CotizacionesScreen = () => {
     setClienteSeleccionado(cliente);
     setClienteNombre(cliente.nombre);
     setClienteDireccion(cliente.direccion);
-    setTipoPersona(cliente.tipo_persona);
+    setClienteRuc(cliente.ruc);
     setMostrarSugerencias(false);
   };
 
@@ -84,8 +86,18 @@ export const CotizacionesScreen = () => {
 
   // Función para agregar un nuevo ítem a la columna derecha
   const handleAddItem = () => {
-    if (!nombreItem || !tipo || !cantidad || !precio) {
-      alert('Por favor completa los campos principales del ítem.');
+    
+    // Existe el nombre
+    if (!nombreItem.trim()) {
+      alert("Ingrese el nombre del ítem");
+      return;
+    }
+
+    // Si precio y cantidad son 0, es un título
+    const esTitulo = Number(cantidad) === 0 && Number(precio) === 0;
+
+    if (cantidad === '' && precio === '') {
+      alert("Complete cantidad y precio, o coloque ambos en 0 si el ítem es un título.");
       return;
     }
 
@@ -93,10 +105,13 @@ export const CotizacionesScreen = () => {
       id: Date.now(),
       nombre: nombreItem,
       descripcion: descripcion,
-      tipo: tipo === 'producto' ? 'Producto' : 'Servicio',
+      tipo: esTitulo
+        ? "Título"
+        : (tipo === 'producto' ? 'Producto' : 'Servicio')
+      ,
       cantidad: Number(cantidad),
       precio: Number(precio),
-      total: totalItemActual,
+      total: esTitulo ? 0 : totalItemActual,
     };
 
     setItems([...items, newItem]);
@@ -123,7 +138,7 @@ export const CotizacionesScreen = () => {
 
   // Envío a documento PDF
   const enviarParaDocumento = () => {
-    if (!clienteNombre || !clienteDireccion || !tipoPersona) {
+    if (!clienteNombre || !clienteDireccion || !clienteRuc) {
       alert('Por favor completa los campos principales del ítem.');
       return;
     }
@@ -133,7 +148,7 @@ export const CotizacionesScreen = () => {
         data: {
           cliente: clienteNombre,
           direccion: clienteDireccion,
-          tipo_persona: tipoPersona,
+          ruc: clienteRuc,
           fecha: new Date().toISOString().split("T")[0],
           solicitante: 'Juan Perez',
           moneda: "SOLES",
@@ -164,7 +179,7 @@ export const CotizacionesScreen = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
             {/* COLUMNA IZQUIERDA: Formulario de entrada de ítem */}
-            <div className="lg:col-span-7 space-y-4">
+            <div className="lg:col-span-5 space-y-4">
 
               {/* SECCIÓN DATOS DEL CLIENTE EN 1 FILA */}
               <div className="space-y-2">
@@ -219,13 +234,13 @@ export const CotizacionesScreen = () => {
                     />
                   </div>
 
-                  {/* Tipo Persona */}
+                  {/* R.U.C */}
                   <div className="md:col-span-3">
                     <input
                       type="text"
-                      placeholder="Tipo Persona"
-                      value={tipoPersona}
-                      onChange={(e) => setTipoPersona(e.target.value)}
+                      placeholder="R.U.C"
+                      value={clienteRuc}
+                      onChange={(e) => setClienteRuc(e.target.value)}
                       className="w-full bg-white rounded-full px-4 py-2 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
                       readOnly
                     />
@@ -376,7 +391,7 @@ export const CotizacionesScreen = () => {
             </div>
 
             {/* COLUMNA DERECHA: Lista de ítems añadidos */}
-            <div className="lg:col-span-5 flex flex-col h-full justify-between space-y-3">
+            <div className="lg:col-span-7 flex flex-col h-full justify-between space-y-3">
 
               {/* Contenedor de lista */}
               <div className="space-y-2.5 overflow-y-auto max-h-[350px] pr-1">
