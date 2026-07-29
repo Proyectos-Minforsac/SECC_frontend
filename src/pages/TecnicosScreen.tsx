@@ -29,8 +29,6 @@ export default function TecnicosScreen() {
   const [tecnicoArea, setTecnicoArea] = useState("");
   const [tecnicoCalificacion, setTecnicoCalificacion] = useState("");
 
-
-
   // Paginación
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -96,6 +94,8 @@ export default function TecnicosScreen() {
     setTecnicoArea("");
     setTecnicoCalificacion("");
   }
+
+  // console.log(tecnicos);
 
   return (
     <div className="flex min-h-screen bg-[#DCE4F3] font-sans antialiased select-none">
@@ -278,7 +278,6 @@ export default function TecnicosScreen() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
             {tecnicos.map((tecnico) => (
               <div key={tecnico.tecnico_id} className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
-
                 <TecnicoCard
                   nombre={tecnico.nombre}
                   numero_documento={tecnico.numero_documento}
@@ -287,6 +286,7 @@ export default function TecnicosScreen() {
                   servicio={tecnico.servicio}
                   area={tecnico.area}
                   calificacion={tecnico.calificacion}
+                  precios={tecnico.precios}
                   on_edit={() => {
                     setTecnicoEditando(tecnico);
 

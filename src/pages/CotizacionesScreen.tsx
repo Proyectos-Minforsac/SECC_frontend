@@ -86,7 +86,7 @@ export const CotizacionesScreen = () => {
 
   // Función para agregar un nuevo ítem a la columna derecha
   const handleAddItem = () => {
-    
+
     // Existe el nombre
     if (!nombreItem.trim()) {
       alert("Ingrese el nombre del ítem");

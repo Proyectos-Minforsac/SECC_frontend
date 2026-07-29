@@ -1,17 +1,60 @@
+import type { PrecioAire } from "../services/tecnicos"
+
 interface TecnicoProps {
   nombre: string,
-  // tipo_documento: string,
   numero_documento: string,
   telefono: string,
   ubicacion: string,
   servicio: string,
   area: string,
   calificacion: string,
+  precios: PrecioAire[],
   on_edit: () => void,
   on_delete: () => void,
 }
 
-export default function TecnicoCard({ nombre, numero_documento, telefono, ubicacion, servicio, area, calificacion, on_edit , on_delete }: TecnicoProps) {
+function TablaAireCondicionado({ precios }: { precios: PrecioAire[] }) {
+  return (
+    <>
+      <p className="font-semibold">
+        Precios por capacidad:
+      </p>
+      
+      {precios.length === 0 ? (
+        <p className="italic text-gray-500">
+          No disponible
+        </p>
+      ) : (
+        <div className="overflow-x-auto mt-2 flex justify-center">
+        <table className="border border-gray-200 rounded-lg overflow-hidden shadow-sm text-sm">
+          <thead className="bg-[#343C8F] text-white">
+            <tr>
+              {precios.map((precio) => (
+                <th key={precio.precio_aire_id} className="px-4 py-3 text-center font-semibold border-r border-[#4B54B2] last:border-r-0">
+                  {precio.tipo_aire}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            <tr className="hover:bg-gray-50">
+              {precios.map((precio) => (
+                <td key={precio.precio_aire_id} className="px-4 py-3 text-center border-t border-r border-gray-200 last:border-r-0 font-medium text-gray-700">
+                  S/ {precio.precio}
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      )}
+      
+      
+    </>
+  )
+}
+
+export default function TecnicoCard({ nombre, numero_documento, telefono, ubicacion, servicio, area, calificacion, precios, on_edit, on_delete }: TecnicoProps) {
   return (
     <>
       <div className="bg-white rounded-2xl overflow-hidden flex flex-col">
@@ -63,7 +106,11 @@ export default function TecnicoCard({ nombre, numero_documento, telefono, ubicac
             {calificacion}
           </p>
 
-          <button className="mt-4 w-full bg-[#343C8F] text-white py-3 rounded-xl hover:bg-[#222861] transition-all cursor-pointer">
+          {servicio === 'Aire Condicionado' ? (
+            <TablaAireCondicionado precios={precios} />
+          ) : null}
+
+          <button className="mt-2 w-full bg-[#343C8F] text-white py-3 rounded-xl hover:bg-[#222861] transition-all cursor-pointer">
             Agregar solicitud
           </button>
         </div>

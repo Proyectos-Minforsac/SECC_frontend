@@ -1,3 +1,9 @@
+export interface PrecioAire {
+  precio_aire_id: number,
+  tipo_aire: string,
+  precio: number,
+}
+
 export interface Tecnico {
   tecnico_id: number,
   nombre: string,
@@ -8,6 +14,7 @@ export interface Tecnico {
   servicio: string,
   area: string,
   calificacion: string,
+  precios: PrecioAire[],
 }
 
 export type NuevoTecnico = Omit<Tecnico, 'tecnico_id'>
