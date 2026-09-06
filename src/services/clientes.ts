@@ -1,13 +1,13 @@
 export interface Cliente {
-  cliente_id: number;
+  clienteId: number;
   nombre: string;
   direccion: string;
   ruc: string;
-  correo_electronico: string;
-  tipo_persona: string;
+  correoElectronico: string;
+  tipoPersona: string;
 }
 
-export type NuevoCliente = Omit<Cliente, 'cliente_id'>
+export type NuevoCliente = Omit<Cliente, 'clienteId'>
 
 export interface ClientesPaginados {
   clientes: Cliente[];
@@ -15,7 +15,6 @@ export interface ClientesPaginados {
   page: number;
   limit: number;
   totalPages: number;
-  nombre: string;
 }
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
@@ -23,7 +22,7 @@ const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 export async function obtenerClientes(
   page: number = 1,
   limit: number = 9,
-  search: string
+  search: string = ""
 ): Promise<ClientesPaginados> {
   const response = await fetch(`${apiBaseUrl}/clientes?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
 
