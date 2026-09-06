@@ -8,6 +8,78 @@ import type { CotizacionItem } from '../types/types';
 
 // const TIPO_COTIZACION = ['Producto', 'Servicio', 'Alquiler', 'Impresora'];
 
+const DetalleItemImpresora = () => {
+  return (
+    <>
+      <div className="bg-[#1C204E] rounded-2xl p-4 space-y-3 border border-[#343C8F] transition-all duration-300">
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="block text-sm text-gray-300 mb-1 ">Fecha</label>
+            <input
+              type="date"
+              placeholder="19/07/2004"
+              className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Tienda</label>
+            <input
+              type="text"
+              placeholder="Escriba la tienda"
+              className="w-full bg-white rounded-full px-4 py-1.5 text-black text-sm outline-none shadow-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Cargo</label>
+            <input
+              type="text"
+              placeholder="Escriba el cargo"
+              className="w-full bg-white rounded-full px-4 py-1.5 text-black text-sm outline-none shadow-sm"
+            />
+          </div>
+
+           <div>
+            <label className="block text-sm text-gray-300 mb-1">Marca</label>
+            <input
+              type="text"
+              placeholder="Escriba la marca"
+              className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Modelo</label>
+            <input
+              type="text"
+              placeholder="Escriba el modelo"
+              className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Número de serie</label>
+            <input
+              type="text"
+              placeholder="Escriba el número de serie"
+              className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Caso HD</label>
+            <input
+              type="text"
+              placeholder="Escriba el caso HD"
+              className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+
 export const CotizacionesScreen = () => {
 
   const navigate = useNavigate();
@@ -43,9 +115,7 @@ export const CotizacionesScreen = () => {
         return;
       }
 
-      if (clienteSeleccionado && clienteNombre === clienteSeleccionado.nombre) {
-        return;
-      }
+      if (clienteSeleccionado && clienteNombre === clienteSeleccionado.nombre) return;
 
       try {
         const data = await obtenerClientes(1, 6, clienteNombre);
@@ -179,7 +249,7 @@ export const CotizacionesScreen = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
             {/* COLUMNA IZQUIERDA: Formulario de entrada de ítem */}
-            <div className="lg:col-span-5 space-y-4">
+            <div className="lg:col-span-6 space-y-4">
 
               {/* SECCIÓN DATOS DEL CLIENTE EN 1 FILA */}
               <div className="space-y-2">
@@ -208,7 +278,7 @@ export const CotizacionesScreen = () => {
                       <ul className="absolute z-10 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-lg max-h-48 overflow-auto">
                         {sugerencias.map((cliente) => (
                           <li
-                            key={cliente.cliente_id}
+                            key={cliente.clienteId}
                             onMouseDown={(e) => {
                               e.preventDefault(); // Evita que el input pierda el foco antes de tiempo
                               seleccionarCliente(cliente);
@@ -234,11 +304,11 @@ export const CotizacionesScreen = () => {
                     />
                   </div>
 
-                  {/* R.U.C */}
+                  {/* RUC */}
                   <div className="md:col-span-3">
                     <input
                       type="text"
-                      placeholder="R.U.C"
+                      placeholder="RUC"
                       value={clienteRuc}
                       onChange={(e) => setClienteRuc(e.target.value)}
                       className="w-full bg-white rounded-full px-4 py-2 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
@@ -254,14 +324,16 @@ export const CotizacionesScreen = () => {
                 <div className="w-44">
                   <select
                     value={tipo}
-                    onChange={(e) => setTipo(e.target.value)}
+                    onChange={(e) => {
+                      setTipo(e.target.value);
+                    }}
                     className="w-full appearance-none bg-white rounded-full px-4 py-2 pr-10 text-sm text-black shadow-sm cursor-pointer focus:outline-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1rem] bg-[right_0.8rem_center] bg-no-repeat"
                   >
-                    <option value="" disabled>
-                      Seleccionar
-                    </option>
-                    <option value="producto">Producto</option>
-                    <option value="servicio">Servicio</option>
+                    <option value="" disabled>Seleccionar</option>
+                    <option value="Producto">Producto</option>
+                    <option value="Servicio">Servicio</option>
+                    <option value="Alquiler">Alquiler</option>
+                    <option value="Impresora">Impresora</option>
                   </select>
                 </div>
               </div>
@@ -327,61 +399,35 @@ export const CotizacionesScreen = () => {
               </div>
 
               {/* DESPLEGABLE: Detalles específicos del ítem */}
-              <div className="mt-2 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setIsDetailsOpen(!isDetailsOpen)}
-                  className="w-full bg-[#E2E4E9] rounded-full px-5 py-2.5 flex items-center justify-between text-black hover:bg-white transition-all shadow-sm focus:outline-none"
-                >
-                  <div className="flex items-center gap-2">
-                    <List className="w-4 h-4 text-black" />
-                    <span className="text-sm font-medium">Detalles específicos del ítem</span>
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-black transition-transform duration-300 ${isDetailsOpen ? 'rotate-180' : 'rotate-0'
-                      }`}
-                  />
-                </button>
-
-                {isDetailsOpen && (
-                  <div className="bg-[#1C204E] rounded-2xl p-4 space-y-3 border border-[#343C8F] transition-all duration-300">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-300 mb-1">Código / SKU</label>
-                        <input
-                          type="text"
-                          placeholder="SKU-0000"
-                          className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-300 mb-1">Descuento (%)</label>
-                        <input
-                          type="number"
-                          placeholder="0"
-                          className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
-                        />
-                      </div>
+              {tipo === 'Impresora' && (
+                <div className="mt-2 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsDetailsOpen(!isDetailsOpen)}
+                    className="w-full bg-[#E2E4E9] rounded-full px-5 py-2.5 flex items-center justify-between text-black hover:bg-white transition-all shadow-sm focus:outline-none"
+                  >
+                    <div className="flex items-center gap-2">
+                      <List className="w-4 h-4 text-black" />
+                      <span className="text-sm font-medium">Detalles específicos del ítem</span>
                     </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-black transition-transform duration-300 cursor-pointer ${isDetailsOpen ? 'rotate-180' : 'rotate-0'
+                        }`}
+                    />
+                  </button>
 
-                    <div>
-                      <label className="block text-xs text-gray-300 mb-1">Notas internas / Garantía</label>
-                      <input
-                        type="text"
-                        placeholder="Ej. Garantía de 12 meses..."
-                        className="w-full bg-white rounded-full px-4 py-1.5 text-black text-xs outline-none shadow-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+                  {(isDetailsOpen) && (
+                    <DetalleItemImpresora />
+                  )}
+                </div>
+              )}
 
               {/* BOTÓN PARA AGREGAR EL ÍTEM A LA LISTA */}
               <div className="pt-2 flex justify-end">
                 <button
                   type="button"
                   onClick={handleAddItem}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] active:scale-95 transition-all shadow-md border border-white cursor-pointer"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] active:scale-95 transition-all shadow-md cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   Agregar ítem
@@ -391,7 +437,7 @@ export const CotizacionesScreen = () => {
             </div>
 
             {/* COLUMNA DERECHA: Lista de ítems añadidos */}
-            <div className="lg:col-span-7 flex flex-col h-full justify-between space-y-3">
+            <div className="lg:col-span-6 flex flex-col h-full justify-between space-y-3">
 
               {/* Contenedor de lista */}
               <div className="space-y-2.5 overflow-y-auto max-h-[350px] pr-1">
@@ -415,22 +461,24 @@ export const CotizacionesScreen = () => {
               </div>
 
               {/* Total acumulado general */}
-              <div className="bg-[#8E92A7] rounded-xl p-3.5 flex items-center justify-between text-black font-bold shadow-inner mt-4">
-                <span className="text-sm font-medium">Total (+ IGV)</span>
-                <span className="text-base font-bold tracking-wide">{totalConIGV.toFixed(2)}</span>
+              <div className='space-y-2.5 overflow-y-auto max-h-[350px] pr-1'>
+                <div className="bg-[#8E92A7] rounded-xl p-3.5 flex items-center justify-between text-black font-bold shadow-inner mt-4">
+                  <span className="text-sm font-medium">Total (+ IGV)</span>
+                  <span className="text-base font-bold tracking-wide">{totalConIGV.toFixed(2)}</span>
+                </div>
+
+                {/* Botones de acción inferiores */}
+                <div className="flex justify-end items-center gap-5 pt-2">
+                  <button onClick={enviarParaDocumento}
+                    className="px-8 py-2.5 bg-[#343C8F] text-white font-medium rounded-full hover:bg-[#282E6E] transition-all shadow-md text-sm cursor-pointer">
+                    Guardar
+                  </button>
+                  <button className="px-8 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-full hover:bg-white transition-all shadow-md text-sm border border-gray-300 cursor-pointer">
+                    Cancelar
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Botones de acción inferiores */}
-          <div className="flex justify-center items-center gap-5 mt-8 pt-4">
-            <button onClick={enviarParaDocumento}
-              className="px-8 py-2.5 bg-[#343C8F] text-white font-medium rounded-full hover:bg-[#282E6E] transition-all shadow-md text-sm cursor-pointer">
-              Guardar cotización
-            </button>
-            <button className="px-8 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-full hover:bg-white transition-all shadow-md text-sm border border-gray-300 cursor-pointer">
-              Cancelar
-            </button>
           </div>
         </div>
       </main>

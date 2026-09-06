@@ -12,10 +12,10 @@ export default function ServiciosScreen() {
 
                     {/* Cabecera: Título */}
                     <div className="flex items-center justify-between mb-8">
-                         <h1 className="text-4xl font-bold text-black tracking-tight">Servicios</h1>
+                         <h1 className="text-4xl font-bold text-black tracking-tight">Historial de Servicios</h1>
                     </div>
 
-
+                    <p>Puede que sea la primera de las opciones, toca analizar</p>
                </main>
           </div>
      )
