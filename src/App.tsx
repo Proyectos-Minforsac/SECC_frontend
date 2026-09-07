@@ -6,6 +6,8 @@ import LoginScreen from './pages/InicioSesionScreen'
 import {Routes, Route, Navigate} from 'react-router-dom';
 import TecnicosScreen from './pages/TecnicosScreen';
 import ServiciosScreen from './pages/ServiciosScreen';
+import VisitasTecnicasScreen from './pages/VisitasTecnicasScreen';
+import MantenimientosScreen from './pages/MantenimientosScreen';
 
 function App() {
 
@@ -21,6 +23,8 @@ function App() {
         <Route path='/servicios' element={<ServiciosScreen />} />
         <Route path="/cotizaciones" element={<CotizacionesScreen />} />
         <Route path="/cotizacion-pdf" element={<CotizacionPdfScreen/>}/>
+        <Route path="/visitas-tecnicas" element={<VisitasTecnicasScreen />}/>
+        <Route path="/mantenimientos" element={<MantenimientosScreen />} />
 
         {/* Redirección automática si escriben una ruta que no existe */}
         <Route path="*" element={<Navigate to="/" />} />
