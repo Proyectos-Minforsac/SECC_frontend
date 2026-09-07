@@ -12,7 +12,7 @@ export default function SideBarComponent() {
     { name: 'Técnicos', active: false, route: '/tecnicos' },
     { name: 'Historial de Servicios', active: false, route: '/servicios' },
     { name: 'Cotizaciones', active: true, route: '/cotizaciones' },
-    { name: 'Visitas Técnicas', active: false, route: '/visitas-tenicas' },
+    { name: 'Visitas Técnicas', active: false, route: '/visitas-tecnicas' },
     { name: 'Mantenimientos', active: false, route: '/mantenimientos' }
   ];
 

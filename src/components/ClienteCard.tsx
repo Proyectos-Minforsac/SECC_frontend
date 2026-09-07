@@ -41,7 +41,7 @@ export default function ClienteCard({ nombre, direccion, ruc, correo_electronico
           </p>
 
           <p>
-            <span className="font-semibold">R.U.C:</span>{" "}
+            <span className="font-semibold">RUC:</span>{" "}
             {ruc}
           </p>
 
