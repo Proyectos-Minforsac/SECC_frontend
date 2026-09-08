@@ -81,7 +81,7 @@ export default function TecnicoCard({ nombre, numeroDocumento, telefono, ubicaci
           <p><span className="font-semibold">Área:</span>{" "}{area}</p>
           <p><span className="font-semibold">Calificación:</span>{" "}{calificacion}</p>
 
-          {servicio === 'Aire condicionado' ? (
+          {servicio === 'Aire Condicionado' ? (
             <TablaAireCondicionado precios={precios} />
           ) : null}
 

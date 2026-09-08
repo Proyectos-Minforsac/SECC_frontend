@@ -92,7 +92,7 @@ export default function TecnicosScreen() {
       return { error: "El teléfono debe tener 9 dígitos." };
     }
 
-    const esAire = tecnicoServicio === "Aire condicionado";
+    const esAire = tecnicoServicio === "Aire Condicionado";
 
     if (esAire && CAPACIDADES_AIRE.some((cap) => Number.isNaN(preciosAire[cap]) || preciosAire[cap] < 0)) {
       return { error: "Los precios de aire condicionado no son válidos." };
@@ -330,7 +330,7 @@ export default function TecnicosScreen() {
                   <option value="" disabled>
                     Servicio
                   </option>
-                  <option value="Aire condicionado">Aire condicionado</option>
+                  <option value="Aire Condicionado">Aire Condicionado</option>
                   <option value="Cableado estructurado">Cableado estructurado</option>
                 </select>
                 <ChevronDown
@@ -372,7 +372,7 @@ export default function TecnicosScreen() {
               </div>
             </div>
 
-            {tecnicoServicio === 'Aire condicionado' && (
+            {tecnicoServicio === 'Aire Condicionado' && (
               <div className="my-3">
                 <span className="text-white block font-medium">Precios de aire condicionado</span>
                 <div className="grid grid-cols-3 gap-3">
