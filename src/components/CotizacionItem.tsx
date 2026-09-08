@@ -22,7 +22,7 @@ export default function CardItem({ id_item, nombre, tipo, cantidad, total, onDel
             <span className="text-xs font-bold leading-none">{cantidad}</span>
           </div>
           <div className="flex flex-col items-start min-w-[50px]">
-            <span className="text-[10px] text-gray-400 font-medium">Total:</span>
+            <span className="text-[10px] text-gray-400 font-medium">Subtotal:</span>
             <span className="text-xs font-bold leading-none">{total.toFixed(2)}</span>
           </div>
 

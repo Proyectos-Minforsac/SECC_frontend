@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
-import type { CotizacionData } from '../types/types';
+import type { CotizacionData, CotizacionItem } from '../services/cotizaciones';
 
 interface CotizacionDocumentProps {
   data: CotizacionData;
@@ -144,21 +144,75 @@ const styles = StyleSheet.create({
   },
   termItem: {
     marginBottom: 3,
-  }
+  },
+
+  // Fila de título / sección dentro de la tabla
+  tituloRow: {
+    backgroundColor: '#EDF2F7',
+  },
+  tituloCell: {
+    width: '100%',
+    fontWeight: 'bold',
+    color: '#1A365D',
+    paddingLeft: 5,
+  },
 });
 
+// Cuando el ítem es una impresora, sus detalles se agregan a la descripción
+// (así se evita crear columnas nuevas en el reporte).
+const construirDescripcion = (row: CotizacionItem) => {
+  const base = row.descripcion || '';
+  const d = row.detalleImpresora;
+
+  if (row.tipo !== 'Impresora' || !d) return base;
+
+  const extras = [
+    d.fecha && `Fecha: ${d.fecha}`,
+    d.tienda && `Tienda: ${d.tienda}`,
+    d.cargo && `Cargo: ${d.cargo}`,
+    d.marca && `Marca: ${d.marca}`,
+    d.modelo && `Modelo: ${d.modelo}`,
+    d.numeroSerie && `N° serie: ${d.numeroSerie}`,
+    d.casoHD && `Caso HD: ${d.casoHD}`,
+  ].filter(Boolean).join(' | ');
+
+  if (!extras) return base;
+  return base ? `${base}\nDetalles impresora: ${extras}` : `Detalles impresora: ${extras}`;
+};
+
 export const CotizacionDocument = ({ data } : CotizacionDocumentProps) => {
-  const items = data?.items || [
-    { item: '1', descripcion: 'Ejemplo de producto o servicio', cantidad: 1, precioUnitario: 100.00 }
-  ];
+  const items = data?.items ?? [];
 
-  const subtotal = items.reduce(
-      (acc, item) => acc + item.total,
-      0
-  );
+  const subtotal = data?.subtotal ?? items.reduce((acc, item) => acc + (item.total ?? 0), 0);
+  const igv = data?.igv ?? subtotal * 0.18;
+  const total = data?.total ?? subtotal + igv;
 
-  const igv = subtotal * 0.18;
-  const total = subtotal + igv;
+  // Numeración que ignora las filas de título
+  let contadorItem = 0;
+  const filasTabla = items.map((row, index) => {
+    if (row.tipo === 'Título') {
+      return (
+        <View style={[styles.tableRow, styles.tituloRow]} key={index}>
+          <Text style={styles.tituloCell}>{row.nombre}</Text>
+        </View>
+      );
+    }
+
+    contadorItem += 1;
+    const precioUnitario = Number(row.precio ?? 0);
+    const totalFila = Number(row.total ?? row.cantidad * precioUnitario);
+
+    return (
+      <View style={styles.tableRow} key={index}>
+        <Text style={styles.colItems}>{contadorItem}</Text>
+        <Text style={styles.colName}>{row.nombre}</Text>
+        <Text style={styles.colDesc}>{construirDescripcion(row)}</Text>
+        <Text style={styles.colQty}>{row.cantidad}</Text>
+        <Text style={styles.colUnitPrice}>{precioUnitario.toFixed(2)}</Text>
+        <Text style={styles.colTotal}>{totalFila.toFixed(2)}</Text>
+      </View>
+    );
+  });
 
   return (
     <Document>
@@ -168,13 +222,13 @@ export const CotizacionDocument = ({ data } : CotizacionDocumentProps) => {
         <View style={styles.headerContainer}>
           <View style={styles.companyDetails}>
             <Text style={styles.companyName}>Multiversicios Informáticos S.A.C</Text>
-            <Text>R.U.C. : 20508243490</Text>
+            <Text>RUC. : 20508243490</Text>
             <Text>DIRECCIÓN: JR. LAS CALÉNDULAS 688 LAS FLORES - S.J.L.</Text>
             <Text>TELÉFONO: 376 - 0122</Text>
           </View>
           <View style={styles.quoteTitleBox}>
             <Text style={styles.quoteTitle}>COTIZACIÓN</Text>
-            <Text style={{ fontSize: 11, marginTop: 4 }}>N° 5010</Text>
+            <Text style={{ fontSize: 11, marginTop: 4 }}>N° {data?.numeroCotizacion || '—'}</Text>
           </View>
         </View>
 
@@ -186,8 +240,8 @@ export const CotizacionDocument = ({ data } : CotizacionDocumentProps) => {
               <Text style={styles.value}>{data?.cliente || '-'}</Text>
             </View>
             <View style={styles.rowDetail}>
-              <Text style={styles.label}>TIPO PERSONA:</Text>
-              <Text style={styles.value}>{data?.tipo_persona || '-'}</Text>
+              <Text style={styles.label}>RUC:</Text>
+              <Text style={styles.value}>{data?.ruc || '-'}</Text>
             </View>
             <View style={styles.rowDetail}>
               <Text style={styles.label}>DIRECCIÓN:</Text>
@@ -222,16 +276,7 @@ export const CotizacionDocument = ({ data } : CotizacionDocumentProps) => {
             <Text style={styles.colTotal}>TOTAL</Text>
           </View>
 
-          {items.map((row, index) => (
-            <View style={styles.tableRow} key={index}>
-              <Text style={styles.colItems}>{index + 1}</Text>
-              <Text style={styles.colName}>{row.nombre}</Text>
-              <Text style={styles.colDesc}>{row.descripcion}</Text>
-              <Text style={styles.colQty}>{row.cantidad}</Text>
-              <Text style={styles.colUnitPrice}>{row.precio.toFixed(2)}</Text>
-              <Text style={styles.colTotal}>{(row.cantidad * row.precio).toFixed(2)}</Text>
-            </View>
-          ))}
+          {filasTabla}
         </View>
 
         {/* Sub-total, IGV y Total */}

@@ -25,7 +25,7 @@ export default function CotizacionPdfScreen() {
                     
                     <div className="flex flex-col items-start justify-between mb-8">
                          <h1 className="text-4xl font-bold text-black tracking-tight">Cotización creada exitosamente</h1>
-                         <h2 className="text-2xl font-bold text-black tracking-tight">N° 5010</h2>
+                         <h2 className="text-2xl font-bold text-black tracking-tight">N° {state?.data?.numeroCotizacion ?? '—'}</h2>
                     </div>
                     
                     <PDFViewer style={{ width: "100%", height: "70vh" }}>
@@ -36,7 +36,7 @@ export default function CotizacionPdfScreen() {
                          <button
                          type="button"
                          onClick={regresarCotizacionesScreen}
-                         className="flex items-center gap-2 px-6 py-2.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] active:scale-95 transition-all shadow-md border border-white"
+                         className="flex items-center gap-2 px-6 py-2.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] active:scale-95 transition-all shadow-md border border-white cursor-pointer"
                          >
                          <ArrowLeft className="w-4 h-4" />
                               Regresar a Cotizaciones
