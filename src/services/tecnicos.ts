@@ -37,9 +37,10 @@ const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 export async function obtenerTecnicos(
   page: number = 1,
   limit: number = 9,
-  search: string
+  search: string,
+  ubicacion: string = ""
 ): Promise<TecnicosPaginados> {
-  const response = await fetch(`${apiBaseUrl}/tecnicos?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+  const response = await fetch(`${apiBaseUrl}/tecnicos?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&ubicacion=${encodeURIComponent(ubicacion)}`);
 
   if (!response.ok) {
     throw new Error('No se pudieron cargar los técnicos');

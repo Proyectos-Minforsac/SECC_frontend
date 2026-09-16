@@ -23,6 +23,7 @@ export const ClientesScreen = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clienteEliminar, setClienteEliminar] = useState<Cliente | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const [tipoPersonaFiltro, setTipoPersonaFiltro] = useState("");
   const [toast, setToast] = useState<{ show: boolean; type: 'success' | 'error'; message: string }>({
     show: false,
     type: 'success',
@@ -52,13 +53,14 @@ export const ClientesScreen = () => {
       page: paginaActual.toString(),
       limit: "9",
       search: busqueda,
+      tipoPersona: tipoPersonaFiltro,
     })
-  }, [paginaActual, busqueda, setSearchParams]);
+  }, [paginaActual, busqueda, tipoPersonaFiltro, setSearchParams]);
 
   const cargarClientes = async () => {
     setLoading(true);
     try {
-      const data = await obtenerClientes(paginaActual, 9, busqueda);
+      const data = await obtenerClientes(paginaActual, 9, busqueda, tipoPersonaFiltro);
       setClientes(data.clientes);
       setTotalPaginas(data.totalPages);
     } catch (error) {
@@ -70,7 +72,7 @@ export const ClientesScreen = () => {
 
   useEffect(() => {
     cargarClientes();
-  }, [paginaActual, busqueda]);
+  }, [paginaActual, busqueda, tipoPersonaFiltro]);
 
   const handleAgregarCliente = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,6 +323,25 @@ export const ClientesScreen = () => {
               setPaginaActual(1);
             }}
           />
+
+          <div className="relative h-10">
+            <select
+              value={tipoPersonaFiltro}
+              onChange={(e) => {
+                setTipoPersonaFiltro(e.target.value);
+                setPaginaActual(1);
+              }}
+              className="w-full h-10 appearance-none bg-white rounded-full px-4 pr-10 text-sm text-black shadow-sm cursor-pointer focus:outline-none"
+            >
+              <option value="">Tipo de persona</option>
+              <option value="Cliente">Cliente</option>
+              <option value="Proveedor">Proveedor</option>
+              <option value="Cliente-Proveedor">Cliente-Proveedor</option>
+              <option value="Trabajador">Trabajador</option>
+            </select>
+            <ChevronDown
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black pointer-events-none" />
+          </div>
         </div>
 
         {loading ? (

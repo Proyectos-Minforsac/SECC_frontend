@@ -8,9 +8,9 @@ export default function SideBarComponent() {
   const location = useLocation();
 
   const menuItems = [
+    { name: 'Historial de Servicios', active: false, route: '/servicios' },
     { name: 'Clientes', active: false, route: '/clientes' },
     { name: 'Técnicos', active: false, route: '/tecnicos' },
-    { name: 'Historial de Servicios', active: false, route: '/servicios' },
     { name: 'Cotizaciones', active: true, route: '/cotizaciones' },
     { name: 'Visitas Técnicas', active: false, route: '/visitas-tecnicas' },
     { name: 'Mantenimientos', active: false, route: '/mantenimientos' }

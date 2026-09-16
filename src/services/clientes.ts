@@ -22,9 +22,20 @@ const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 export async function obtenerClientes(
   page: number = 1,
   limit: number = 9,
-  search: string = ""
+  search: string = "",
+  tipoPersona: string = ""
 ): Promise<ClientesPaginados> {
-  const response = await fetch(`${apiBaseUrl}/clientes?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    search,
+  });
+
+  if (tipoPersona) {
+    params.set('tipoPersona', tipoPersona);
+  }
+
+  const response = await fetch(`${apiBaseUrl}/clientes?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error('No se pudieron cargar los clientes');

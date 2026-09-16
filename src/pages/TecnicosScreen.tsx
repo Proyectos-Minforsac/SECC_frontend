@@ -28,6 +28,7 @@ export default function TecnicosScreen() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tecnicoEliminar, setTecnicoEliminar] = useState<Tecnico | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const [ubicacionFiltro, setUbicacionFiltro] = useState('');
   const [toast, setToast] = useState<{ show: boolean; type: 'success' | 'error'; message: string }>({
     show: false,
     type: 'success',
@@ -49,6 +50,17 @@ export default function TecnicosScreen() {
   const [tecnicoCalificacion, setTecnicoCalificacion] = useState("");
   const [preciosAire, setPreciosAire] = useState<Record<string, number>>(preciosAireIniciales);
 
+  // Ubicaciones disponibles para el select, independientes de la página/filtro actual.
+  const [ubicacionesDisponibles, setUbicacionesDisponibles] = useState<string[]>([]);
+
+  useEffect(() => {
+    obtenerTecnicos(1, 1000, "")
+      .then((data) => {
+        setUbicacionesDisponibles([...new Set(data.tecnicos.map((tecnico) => tecnico.ubicacion))]);
+      })
+      .catch((error) => console.error('Error al cargar ubicaciones', error));
+  }, []);
+
   // Paginación
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -65,8 +77,9 @@ export default function TecnicosScreen() {
   }, [paginaActual, busqueda, setSearchParams]);
 
   const cargarTecnicos = async () => {
+    setLoading(true);
     try {
-      const data = await obtenerTecnicos(paginaActual, 9, busqueda);
+      const data = await obtenerTecnicos(paginaActual, 9, busqueda, ubicacionFiltro);
       setTecnicos(data.tecnicos);
       setTotalPaginas(data.totalPages);
 
@@ -80,7 +93,7 @@ export default function TecnicosScreen() {
 
   useEffect(() => {
     cargarTecnicos();
-  }, [paginaActual, busqueda]);
+  }, [paginaActual, busqueda, ubicacionFiltro]);
 
   // Valida el formulario y arma el cuerpo de la petición. Devuelve { error } o { payload }.
   const construirPayloadTecnico = (): { error?: string; payload?: NuevoTecnico } => {
@@ -426,6 +439,24 @@ export default function TecnicosScreen() {
               setPaginaActual(1);
             }}
           />
+
+          <div className="relative h-10">
+            <select
+              value={ubicacionFiltro}
+              onChange={(e) => {
+                setUbicacionFiltro(e.target.value);
+                setPaginaActual(1);
+              }}
+              className="w-full h-10 appearance-none bg-white rounded-full px-4 pr-10 text-sm text-black shadow-sm cursor-pointer focus:outline-none"
+            >
+              <option value="">Ubicación</option>
+              {ubicacionesDisponibles.map(ubicacion => (
+                <option key={ubicacion} value={ubicacion}>{ubicacion}</option>
+              ))}
+            </select>
+            <ChevronDown
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black pointer-events-none" />
+          </div>
         </div>
 
         {loading ? (

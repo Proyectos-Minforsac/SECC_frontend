@@ -74,7 +74,7 @@ export const LoginScreen = () => {
           {/* Botón Ingresar */}
           <div className="pt-2 flex justify-center">
             <Link
-              to="/clientes"
+              to="/servicios"
               type="submit"
               className="px-10 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-2xl hover:bg-white active:scale-95 transition-all text-base shadow-sm"
             >
