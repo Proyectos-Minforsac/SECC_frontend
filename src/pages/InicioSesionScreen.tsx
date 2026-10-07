@@ -1,13 +1,23 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { RUTA_INICIO, useAuth, type Rol } from '../context/AuthContext';
+import MinforSacImage from './../assets/logo_minforsac.jpg';
 
 export const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Temporal: mientras no exista autenticación en el backend, el rol se elige aquí.
+  const [rol, setRol] = useState<Rol>('empleado');
+
+  const { usuario, iniciarSesion } = useAuth();
+  const navigate = useNavigate();
+
+  if (usuario) return <Navigate to={RUTA_INICIO[usuario.rol]} replace />;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Iniciando sesión con:', { email, password });
+    iniciarSesion({ nombre: email.split('@')[0], rol });
+    navigate(RUTA_INICIO[rol], { replace: true });
   };
 
   return (
@@ -18,20 +28,7 @@ export const LoginScreen = () => {
         {/* Contenedor del Logo imitando el recuadro blanco de la imagen */}
         <div className="bg-white p-4 shadow-sm rounded-sm mb-4 w-52 h-44 flex flex-col items-center justify-center">
           {/* Logo Geométrico (Simulado con CSS/SVG) */}
-          <div className="relative w-20 h-20 mb-2">
-            {/* Prisma superior */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-14 h-12 bg-gradient-to-b from-[#6BA4E8] to-[#1E56A0] clip-path-prisma"></div>
-            {/* Líneas/Estructura inferior */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-12 h-6 border-b-2 border-l-2 border-r-2 border-[#1E56A0] opacity-60 flex flex-col justify-between p-0.5">
-              <div className="w-full h-[1px] bg-[#1E56A0] opacity-40"></div>
-              <div className="w-full h-[1px] bg-[#1E56A0] opacity-40"></div>
-            </div>
-          </div>
-          {/* Texto 'minforsac' */}
-          <div className="text-3xl font-bold tracking-tight text-black">
-            <span className="text-[#6BA4E8]">m</span>
-            <span>inforsac</span>
-          </div>
+          <img src={MinforSacImage} alt="Logo Minforsac" />
         </div>
 
         {/* Subtítulo */}
@@ -41,7 +38,7 @@ export const LoginScreen = () => {
       </div>
 
       {/* Sección Derecha: Formulario de Inicio de Sesión */}
-      <div className="w-full max-w-[460px] bg-[#222861] rounded-2xl p-8 md:p-10 shadow-lg text-white">
+      <div className="w-full max-w-115 bg-[#222861] rounded-2xl p-8 md:p-10 shadow-lg text-white">
         <h2 className="text-xl md:text-2xl font-normal mb-6 text-left">
           Iniciar sesión
         </h2>
@@ -71,15 +68,26 @@ export const LoginScreen = () => {
             />
           </div>
 
+          {/* Rol (temporal) */}
+          <div>
+            <select
+              value={rol}
+              onChange={(e) => setRol(e.target.value as Rol)}
+              className="w-full px-5 py-3.5 rounded-full bg-white text-gray-900 outline-none focus:ring-2 focus:ring-[#6BA4E8] transition-all text-base cursor-pointer"
+            >
+              <option value="empleado">Empleado</option>
+              <option value="tecnico">Técnico</option>
+            </select>
+          </div>
+
           {/* Botón Ingresar */}
           <div className="pt-2 flex justify-center">
-            <Link
-              to="/servicios"
+            <button
               type="submit"
-              className="px-10 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-2xl hover:bg-white active:scale-95 transition-all text-base shadow-sm"
+              className="px-10 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-2xl hover:bg-white active:scale-95 transition-all text-base shadow-sm cursor-pointer"
             >
               Ingresar
-            </Link>
+            </button>
           </div>
         </form>
       </div>
