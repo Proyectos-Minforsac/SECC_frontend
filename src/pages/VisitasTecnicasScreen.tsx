@@ -1,162 +1,254 @@
 import { useState } from "react";
-import SideBarComponent from "../components/SideBar";
-import AgregarEditarModal from "../components/Modal";
-import { ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Clock } from "lucide-react";
+import { useVisitas } from "../hooks/useVisitas";
+import { useVisitasProgramadas } from "../hooks/useVisitasProgramadas";
+import { useSolicitudes } from "../hooks/useSolicitudes";
+import VisitasTecnicasTable from "../components/VisitasTecnicasTable";
+import VisitaProgramadaModal, { type DatosVisitaProgramada } from "../components/VisitaProgramadaModal";
+import AvanceVisitaDetalle from "../components/AvanceVisitaDetalle";
+import SeguimientoVisitas from "../components/SeguimientoVisitas";
+import DetalleVisitaPanel from "../components/DetalleVisitaPanel";
+import {
+  detalleVisitaDiagnostico,
+  detalleVisitaProgramada,
+  type SeleccionVisita,
+} from "../services/detalleVisita";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import Toast from "../components/Toast";
+import { agregarNotificacion } from "../services/notificaciones";
+import {
+  agregarVisitaProgramada,
+  editarVisitaProgramada,
+  eliminarVisitaProgramada,
+  formatearFechaISO,
+  ordenarPorFechaHora,
+  type VisitaProgramada,
+} from "../services/visitasProgramadas";
+import type { VisitaTecnica } from "../services/visitas";
 
 export default function VisitasTecnicasScreen() {
-  
-  const [loading, setLoading] = useState(true);
+  const visitas = useVisitas();
+  const visitasProgramadas = useVisitasProgramadas();
+  const solicitudes = useSolicitudes();
+
+  const [visitaSeleccionada, setVisitaSeleccionada] = useState<VisitaTecnica | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [visitaProgramadaEditando, setVisitaProgramadaEditando] = useState<VisitaProgramada | null>(null);
+  const [visitaProgramadaEliminar, setVisitaProgramadaEliminar] = useState<VisitaProgramada | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
+
+  const mostrarError = (e: unknown, porDefecto: string) =>
+    setToast({ show: true, message: e instanceof Error ? e.message : porDefecto });
+
+  const [seleccionDetalle, setSeleccionDetalle] = useState<SeleccionVisita | null>(null);
+
+  const detalleVisita = (() => {
+    if (!seleccionDetalle) return null;
+    const servicio = visitas.find((v) => v.visitaId === seleccionDetalle.visitaId);
+    if (!servicio) return null;
+    if (seleccionDetalle.tipo === 'diagnostico') return detalleVisitaDiagnostico(servicio);
+
+    const hermanas = visitasProgramadas.filter((v) => v.visitaId === servicio.visitaId);
+    const programada = hermanas.find((v) => v.visitaProgramadaId === seleccionDetalle.visitaProgramadaId);
+    return programada ? detalleVisitaProgramada(servicio, programada, hermanas) : null;
+  })();
+
+  const clienteDelDetalle = (() => {
+    const servicio = visitas.find((v) => v.visitaId === seleccionDetalle?.visitaId);
+    return solicitudes.find((s) => s.solicitudId === servicio?.solicitudId)?.cliente ?? null;
+  })();
+
+  const seleccionarServicio = (visita: VisitaTecnica) => {
+    setVisitaSeleccionada((actual) => (actual?.visitaId === visita.visitaId ? null : visita));
+  };
+
+  const programadasDelServicio = visitaSeleccionada
+    ? ordenarPorFechaHora(visitasProgramadas.filter((v) => v.visitaId === visitaSeleccionada.visitaId))
+    : [];
+
+  const abrirNuevaVisita = () => {
+    setVisitaProgramadaEditando(null);
+    setIsModalOpen(true);
+  };
+
+  const abrirEditarVisita = (visita: VisitaProgramada) => {
+    setVisitaProgramadaEditando(visita);
+    setIsModalOpen(true);
+  };
+
   const cerrarModal = () => {
     setIsModalOpen(false);
-  }
+    setVisitaProgramadaEditando(null);
+  };
+
+  const handleGuardarVisitaProgramada = async (datos: DatosVisitaProgramada) => {
+    if (!visitaSeleccionada || guardando) return;
+
+    setGuardando(true);
+    try {
+      const datosServicio = { ...datos, visitaId: visitaSeleccionada.visitaId };
+      if (visitaProgramadaEditando) {
+        await editarVisitaProgramada(visitaProgramadaEditando.visitaProgramadaId, datosServicio);
+      } else {
+        await agregarVisitaProgramada(datosServicio);
+      }
+    } catch (e) {
+      return mostrarError(e, "No se pudo guardar la visita programada.");
+    } finally {
+      setGuardando(false);
+    }
+
+    agregarNotificacion({
+      rolDestino: 'tecnico',
+      tecnicoDestino: visitaSeleccionada.tecnicoNombre,
+      solicitudId: visitaSeleccionada.solicitudId,
+      mensaje: `${visitaProgramadaEditando ? 'Se reprogramó' : 'Se programó'} una visita a ${visitaSeleccionada.clienteNombre} el ${formatearFechaISO(datos.fecha)} de ${datos.horaInicio} a ${datos.horaFin}. Tareas: ${datos.descripcionTareas}`,
+    });
+
+    cerrarModal();
+  };
+
+  const confirmarEliminarVisitaProgramada = async () => {
+    if (!visitaProgramadaEliminar) return;
+
+    setEliminando(true);
+    try {
+      await eliminarVisitaProgramada(visitaProgramadaEliminar.visitaProgramadaId);
+    } catch (e) {
+      mostrarError(e, "No se pudo eliminar la visita programada.");
+    } finally {
+      setEliminando(false);
+      setVisitaProgramadaEliminar(null);
+    }
+  };
 
   return (
-    <div className="flex min-h-screen bg-[#DCE4F3] font-sans antialiased select-none">
-
-      {/* 1. SIDEBAR (Menú Lateral) */}
-      <SideBarComponent />
-
-      {/* 2. ÁREA DE CONTENIDO PRINCIPAL */}
+    <div className="flex flex-1 bg-[#DCE4F3] font-sans antialiased">
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
+        <h1 className="text-4xl font-bold text-black tracking-tight mb-8">Visitas Técnicas</h1>
 
-        {/* Cabecera: Título */}
-        <div className="flex items-center gap-4 mb-8">
-          <h1 className="text-4xl font-bold text-black tracking-tight">Visitas Técnicas</h1>
-          <button
-            className="px-5 py-1.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all flex items-center gap-1 shadow-sm cursor-pointer">
-            Agregar
-          </button>
+        <div className="my-5">
+          <VisitasTecnicasTable
+            visitas={visitas}
+            visitaSeleccionadaId={visitaSeleccionada?.visitaId ?? null}
+            onSeleccionar={seleccionarServicio}
+          />
         </div>
 
-        <AgregarEditarModal
+        <h2 className="text-2xl font-bold text-black tracking-tight mt-10 mb-4">Seguimiento por etapas</h2>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+          <SeguimientoVisitas
+            visitas={visitas}
+            visitasProgramadas={visitasProgramadas}
+            seleccion={seleccionDetalle}
+            onSeleccionar={setSeleccionDetalle}
+          />
+          {detalleVisita && (
+            <div className="xl:sticky xl:top-4">
+              <DetalleVisitaPanel detalle={detalleVisita} cliente={clienteDelDetalle} onCerrar={() => setSeleccionDetalle(null)} />
+            </div>
+          )}
+        </div>
+
+        {visitaSeleccionada && (
+          <div className="mt-8 bg-white rounded-2xl shadow-sm p-6">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  Agenda de visitas — {visitaSeleccionada.clienteNombre}
+                </h2>
+                <p className="text-sm text-slate-500">Técnico: {visitaSeleccionada.tecnicoNombre}</p>
+              </div>
+              <button
+                onClick={abrirNuevaVisita}
+                disabled={visitaSeleccionada.cierre !== undefined}
+                title={visitaSeleccionada.cierre ? 'El servicio ya fue cerrado' : undefined}
+                className="flex items-center gap-1 px-5 py-1.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all shadow-sm cursor-pointer disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar
+              </button>
+            </div>
+
+            {programadasDelServicio.length > 0 ? (
+              <ul className="flex flex-col gap-2.5">
+                {programadasDelServicio.map((visita) => (
+                  <li
+                    key={visita.visitaProgramadaId}
+                    className="flex items-start justify-between gap-4 bg-slate-50 rounded-xl px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 font-semibold text-slate-800 text-sm">
+                        <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+                        {formatearFechaISO(visita.fecha)} · {visita.horaInicio} - {visita.horaFin}
+                      </p>
+                      <p className="text-sm text-slate-600 mt-1">{visita.descripcionTareas}</p>
+                      {visita.avance && <AvanceVisitaDetalle avance={visita.avance} />}
+                    </div>
+                    {visita.avance ? (
+                      <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border bg-emerald-100 text-emerald-700 border-emerald-300/60">
+                        COMPLETADA
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-2 shrink-0 text-gray-700">
+                        <button
+                          onClick={() => abrirEditarVisita(visita)}
+                          aria-label="Reprogramar visita"
+                          className="hover:text-black cursor-pointer"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setVisitaProgramadaEliminar(visita)}
+                          aria-label="Eliminar visita"
+                          className="hover:text-red-600 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-slate-400 text-sm">Aún no hay visitas programadas para este servicio.</p>
+            )}
+          </div>
+        )}
+
+        <VisitaProgramadaModal
           isOpen={isModalOpen}
+          clienteNombre={visitaSeleccionada?.clienteNombre ?? ''}
+          visitaProgramada={visitaProgramadaEditando}
           onClose={cerrarModal}
-          title={'Editar técnico'}
-        >
-          <form
-          >
-            <div className="my-3">
-              <input
-                type="text"
-                placeholder="Nombre o razón social"
-                maxLength={256}
-                className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm mt-3"
-              />
-            </div>
+          onGuardar={handleGuardarVisitaProgramada}
+        />
 
-            <div className="flex gap-3 my-3">
-              {/* Contenedor 1: select con icono */}
-              <div className="relative flex-1 mt-3">
-                <select
-                  className="w-full appearance-none bg-white rounded-full px-5 pr-11 py-2.5 text-sm text-black shadow-sm cursor-pointer focus:outline-none"
-                >
-                  <option value="" disabled>
-                    Tipo de documento
-                  </option>
-                  <option value="DNI">DNI</option>
-                  <option value="RUC">RUC</option>
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                />
-              </div>
+        <ConfirmDeleteModal
+          open={visitaProgramadaEliminar !== null}
+          title="Eliminar visita programada"
+          message={
+            <>
+              ¿Está seguro de que quiere eliminar la visita del{' '}
+              <span className="font-semibold">
+                {visitaProgramadaEliminar ? formatearFechaISO(visitaProgramadaEliminar.fecha) : ''}
+              </span>
+              ? Esta acción no se puede deshacer.
+            </>
+          }
+          deleting={eliminando}
+          onCancel={() => setVisitaProgramadaEliminar(null)}
+          onConfirm={confirmarEliminarVisitaProgramada}
+        />
 
-              {/* Contenedor 2: input */}
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Número de documento"
-                  className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm mt-3"
-                />
-              </div>
-            </div>
-
-            <div className="my-3">
-              <input
-                type="text"
-                placeholder="Ubicación"
-                maxLength={256}
-                className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm mt-3"
-              />
-            </div>
-
-            <div className="flex gap-3 my-3">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Teléfono"
-                  maxLength={9}
-                  inputMode='numeric'
-                  pattern='[0-9]{9}'
-                  className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm mt-3"
-                />
-              </div>
-              <div className="flex-1 relative mt-3">
-                <select
-                  className="w-full appearance-none bg-white rounded-full px-5 pr-11 py-2.5 text-sm text-black shadow-sm cursor-pointer focus:outline-none"
-                >
-                  <option value="" disabled>
-                    Servicio
-                  </option>
-                  <option value="Aire Condicionado">Aire Condicionado</option>
-                  <option value="Cableado estructurado">Cableado estructurado</option>
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 my-3">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Área"
-                  maxLength={256}
-                  className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm mt-3"
-                />
-              </div>
-
-              <div className="flex-1 relative mt-3">
-                <select
-                  className="w-full appearance-none bg-white rounded-full px-5 pr-11 py-2.5 text-sm text-black shadow-sm cursor-pointer focus:outline-none"
-                >
-                  <option value="" disabled>
-                    Calificación
-                  </option>
-                  <option value="Buena">Buena</option>
-                  <option value="Regular">Regular</option>
-                  <option value="Mala">Mala</option>
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                />
-              </div>
-            </div>
-
-            <div className='flex flex-row justify-center items-center gap-3 pt-2'>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className='px-5 py-1.5 bg-[#E2E4E9] text-gray-800 text-sm font-medium rounded-full hover:bg-white transition-colors items-center gap-1 shadow-sm cursor-pointer'>
-                Cancelar
-              </button>
-
-              <button
-                type='submit'
-                disabled={guardando}
-                className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors items-center gap-1 shadow-sm ${guardando ? 'bg-[#C7CAD1] text-gray-500 cursor-not-allowed' : 'bg-[#E2E4E9] text-gray-800 hover:bg-white cursor-pointer'}`}>
-              </button>
-            </div>
-          </form>
-        </ AgregarEditarModal>
+        <Toast
+          show={toast.show}
+          type="error"
+          message={toast.message}
+          onClose={() => setToast((t) => ({ ...t, show: false }))}
+        />
       </main>
     </div>
   );

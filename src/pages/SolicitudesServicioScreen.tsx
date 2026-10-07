@@ -18,7 +18,7 @@ import AgregarEditarModal from "../components/Modal"
 import { ChevronDown } from "lucide-react"
 import SearchBar from "../components/SearchBar"
 import { agregarNotificacion } from "../services/notificaciones"
-import { registrarVisita } from "../services/visitas"
+import { cargarVisitas } from "../services/visitas"
 import AutorizarViajeModal from "../components/AutorizarViajeModal"
 import Toast from "../components/Toast"
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal"
@@ -73,8 +73,10 @@ export default function SolicitudesServicioScreen() {
     }
   }
 
+  // Espera a que el usuario deje de escribir para no consultar con cada tecla.
   useEffect(() => {
-    cargarClientes();
+    const temporizador = setTimeout(cargarClientes, 400);
+    return () => clearTimeout(temporizador);
   }, [busqueda]);
 
   // Carga las ubicaciones disponibles una sola vez para llenar el select
@@ -203,13 +205,8 @@ export default function SolicitudesServicioScreen() {
       return mostrarError(e, "No se pudo autorizar el viaje.");
     }
 
-    registrarVisita({
-      solicitudId,
-      clienteNombre,
-      tecnicoNombre,
-      descripcion: autorizacion.instrucciones,
-      fecha: new Date().toLocaleDateString('es-PE'),
-    });
+    // El backend crea la visita técnica al autorizar el viaje; aquí solo se trae para verla en las demás pantallas.
+    cargarVisitas().catch((e) => console.error('Error al cargar las visitas técnicas', e));
 
     agregarNotificacion({
       rolDestino: 'tecnico',
