@@ -47,8 +47,8 @@ export interface NuevaSolicitudServicio {
 export interface NuevaOferta {
   tecnicoNombre: string;
   montoVisita: number;
-  // Obligatorio en la primera oferta; al editarla, sin archivo se conserva el anterior.
-  archivo: File | null;
+  // Opcional y por ahora sin uso: la oferta solo lleva el monto. Si se envía, el backend lo guarda en Drive.
+  archivo?: File | null;
 }
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
