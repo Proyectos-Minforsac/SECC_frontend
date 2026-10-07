@@ -1,14 +1,15 @@
 interface SearchBarProps {
   onBuscar: (texto: string) => void;
+  className?: string;
 }
 
-export default function SearchBar({ onBuscar }: SearchBarProps) {
+export default function SearchBar({ onBuscar, className = "mb-10" }: SearchBarProps) {
   const manejarBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
     onBuscar(e.target.value);
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-10 max-w-4xl">
+    <div className={`flex flex-col sm:flex-row gap-4 max-w-4xl ${className}`}>
       <div className="relative flex-1">
         <input
           type="text"
