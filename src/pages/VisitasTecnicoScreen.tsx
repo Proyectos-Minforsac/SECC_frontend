@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Check, ChevronDown, Lock, LockOpen, Clock } from "lucide-react"
+import { Check, ChevronDown, Lock, Clock } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
 import { useVisitas } from "../hooks/useVisitas"
 import { useVisitasProgramadas } from "../hooks/useVisitasProgramadas"
@@ -11,8 +11,8 @@ import { agregarNotificacion } from "../services/notificaciones"
 import {
   formatearFechaISO,
   guardarAvanceVisitaProgramada,
-  ordenarPorFechaHora,
   visitaProgramadaActual,
+  visitasDeEtapa,
   type AvanceVisita,
 } from "../services/visitasProgramadas"
 import {
@@ -22,6 +22,7 @@ import {
   etapaActivaIndice,
   etapaHabilitada,
   guardarDiagnostico,
+  tipoDeEtapa,
   type DiagnosticoVisita,
 } from "../services/visitas"
 
@@ -135,12 +136,12 @@ export default function VisitasTecnicoScreen() {
                         const activa = indice === activaIndice;
                         const esDiagnostico = indice === 0;
                         const esInstalacion = indice === 1;
-                        // Habilitada = visible y desbloqueada; solo la etapa activa admite ingreso de datos.
+                        const tipo = tipoDeEtapa(indice);
+                        // Habilitada = completada o activa; las demás se ven bloqueadas hasta que el empleado
+                        // finalice la anterior. Solo la etapa activa admite ingreso de datos.
                         const habilitada = etapaHabilitada(visita, indice);
-                        const visitasEtapa = ordenarPorFechaHora(
-                          visitasProgramadas.filter((vp) => vp.visitaId === visita.visitaId)
-                        );
-                        const visitaActual = visitaProgramadaActual(visitasEtapa);
+                        const visitasEtapa = tipo ? visitasDeEtapa(visitasProgramadas, visita.visitaId, tipo) : [];
+                        const visitaActual = activa ? visitaProgramadaActual(visitasEtapa) : null;
 
                         return (
                           <li key={etapa} className={`px-5 py-3 ${habilitada ? "" : "opacity-50"}`}>
@@ -150,8 +151,6 @@ export default function VisitasTecnicoScreen() {
                                   <Check size={16} className="text-emerald-600" />
                                 ) : activa ? (
                                   <span className="w-4 h-4 rounded-full border-2 border-[#2A317A]" />
-                                ) : habilitada ? (
-                                  <LockOpen size={14} className="text-slate-500" />
                                 ) : (
                                   <Lock size={14} className="text-slate-400" />
                                 )}
@@ -161,11 +160,9 @@ export default function VisitasTecnicoScreen() {
                                     ? "Completada"
                                     : activa
                                       ? "Activa"
-                                      : habilitada
-                                        ? "Habilitada"
-                                        : esInstalacion && esperandoCotizacion
+                                      : esInstalacion && esperandoCotizacion
                                         ? "Esperando aceptación de la cotización"
-                                        : "Bloqueada"}
+                                        : "Bloqueada hasta finalizar la etapa anterior"}
                                 </span>
                               </div>
 
@@ -179,7 +176,7 @@ export default function VisitasTecnicoScreen() {
                               )}
                             </div>
 
-                            {esInstalacion && habilitada && (
+                            {tipo !== null && visitasEtapa.length > 0 && (
                               <div className="mt-3 ml-6 flex flex-col gap-2">
                                 {visitasEtapa.map((vp) => {
                                   const esActual = vp.visitaProgramadaId === visitaActual?.visitaProgramadaId;
@@ -223,10 +220,10 @@ export default function VisitasTecnicoScreen() {
                                     </div>
                                   );
                                 })}
-                                {visitasEtapa.length === 0 && (
-                                  <p className="text-sm text-slate-400">Aún no hay visitas programadas.</p>
-                                )}
                               </div>
+                            )}
+                            {tipo !== null && habilitada && visitasEtapa.length === 0 && (
+                              <p className="mt-3 ml-6 text-sm text-slate-400">Aún no hay visitas programadas.</p>
                             )}
 
                             {completada && esDiagnostico && visita.diagnostico && (

@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Clock } from "lucide-react";
 import { useVisitas } from "../hooks/useVisitas";
 import { useVisitasProgramadas } from "../hooks/useVisitasProgramadas";
 import { useSolicitudes } from "../hooks/useSolicitudes";
 import VisitasTecnicasTable from "../components/VisitasTecnicasTable";
 import VisitaProgramadaModal, { type DatosVisitaProgramada } from "../components/VisitaProgramadaModal";
-import AvanceVisitaDetalle from "../components/AvanceVisitaDetalle";
 import SeguimientoVisitas from "../components/SeguimientoVisitas";
 import DetalleVisitaPanel from "../components/DetalleVisitaPanel";
 import {
@@ -16,31 +14,48 @@ import {
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import Toast from "../components/Toast";
 import { agregarNotificacion } from "../services/notificaciones";
+import { garantiaDelServicio } from "../services/mantenimientos";
 import {
   agregarVisitaProgramada,
   editarVisitaProgramada,
   eliminarVisitaProgramada,
   formatearFechaISO,
-  ordenarPorFechaHora,
   type VisitaProgramada,
 } from "../services/visitasProgramadas";
-import type { VisitaTecnica } from "../services/visitas";
+import {
+  ETAPAS_SERVICIO,
+  etapaActivaIndice,
+  finalizarEtapaServicio,
+  nombreDeTipo,
+  type TipoVisita,
+  type VisitaTecnica,
+} from "../services/visitas";
+
+// Visita que se está programando (editando === null) o reprogramando dentro de la etapa `tipo` de un servicio.
+interface ProgramacionEnCurso {
+  visita: VisitaTecnica;
+  tipo: TipoVisita;
+  editando: VisitaProgramada | null;
+}
 
 export default function VisitasTecnicasScreen() {
   const visitas = useVisitas();
   const visitasProgramadas = useVisitasProgramadas();
   const solicitudes = useSolicitudes();
 
-  const [visitaSeleccionada, setVisitaSeleccionada] = useState<VisitaTecnica | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [visitaProgramadaEditando, setVisitaProgramadaEditando] = useState<VisitaProgramada | null>(null);
+  const [programacion, setProgramacion] = useState<ProgramacionEnCurso | null>(null);
   const [visitaProgramadaEliminar, setVisitaProgramadaEliminar] = useState<VisitaProgramada | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: "" });
+  const [finalizandoId, setFinalizandoId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>({
+    show: false,
+    type: "error",
+    message: "",
+  });
 
   const mostrarError = (e: unknown, porDefecto: string) =>
-    setToast({ show: true, message: e instanceof Error ? e.message : porDefecto });
+    setToast({ show: true, type: "error", message: e instanceof Error ? e.message : porDefecto });
 
   const [seleccionDetalle, setSeleccionDetalle] = useState<SeleccionVisita | null>(null);
 
@@ -60,37 +75,19 @@ export default function VisitasTecnicasScreen() {
     return solicitudes.find((s) => s.solicitudId === servicio?.solicitudId)?.cliente ?? null;
   })();
 
-  const seleccionarServicio = (visita: VisitaTecnica) => {
-    setVisitaSeleccionada((actual) => (actual?.visitaId === visita.visitaId ? null : visita));
-  };
-
-  const programadasDelServicio = visitaSeleccionada
-    ? ordenarPorFechaHora(visitasProgramadas.filter((v) => v.visitaId === visitaSeleccionada.visitaId))
-    : [];
-
-  const abrirNuevaVisita = () => {
-    setVisitaProgramadaEditando(null);
-    setIsModalOpen(true);
-  };
-
-  const abrirEditarVisita = (visita: VisitaProgramada) => {
-    setVisitaProgramadaEditando(visita);
-    setIsModalOpen(true);
-  };
-
-  const cerrarModal = () => {
-    setIsModalOpen(false);
-    setVisitaProgramadaEditando(null);
-  };
+  const garantiaFin = programacion?.tipo === 'MANTENIMIENTO'
+    ? garantiaDelServicio(visitasProgramadas.filter((v) => v.visitaId === programacion.visita.visitaId))?.fin
+    : undefined;
 
   const handleGuardarVisitaProgramada = async (datos: DatosVisitaProgramada) => {
-    if (!visitaSeleccionada || guardando) return;
+    if (!programacion || guardando) return;
+    const { visita, tipo, editando } = programacion;
 
     setGuardando(true);
     try {
-      const datosServicio = { ...datos, visitaId: visitaSeleccionada.visitaId };
-      if (visitaProgramadaEditando) {
-        await editarVisitaProgramada(visitaProgramadaEditando.visitaProgramadaId, datosServicio);
+      const datosServicio = { ...datos, visitaId: visita.visitaId, tipo };
+      if (editando) {
+        await editarVisitaProgramada(editando.visitaProgramadaId, datosServicio);
       } else {
         await agregarVisitaProgramada(datosServicio);
       }
@@ -102,12 +99,12 @@ export default function VisitasTecnicasScreen() {
 
     agregarNotificacion({
       rolDestino: 'tecnico',
-      tecnicoDestino: visitaSeleccionada.tecnicoNombre,
-      solicitudId: visitaSeleccionada.solicitudId,
-      mensaje: `${visitaProgramadaEditando ? 'Se reprogramó' : 'Se programó'} una visita a ${visitaSeleccionada.clienteNombre} el ${formatearFechaISO(datos.fecha)} de ${datos.horaInicio} a ${datos.horaFin}. Tareas: ${datos.descripcionTareas}`,
+      tecnicoDestino: visita.tecnicoNombre,
+      solicitudId: visita.solicitudId,
+      mensaje: `${editando ? 'Se reprogramó' : 'Se programó'} una visita de ${nombreDeTipo(tipo).toLowerCase()} a ${visita.clienteNombre} el ${formatearFechaISO(datos.fecha)} de ${datos.horaInicio} a ${datos.horaFin}. Tareas: ${datos.descripcionTareas}`,
     });
 
-    cerrarModal();
+    setProgramacion(null);
   };
 
   const confirmarEliminarVisitaProgramada = async () => {
@@ -124,17 +121,44 @@ export default function VisitasTecnicasScreen() {
     }
   };
 
+  const handleFinalizarEtapa = async (visita: VisitaTecnica) => {
+    const indice = etapaActivaIndice(visita);
+    if (indice === null || finalizandoId !== null) return;
+
+    const etapa = ETAPAS_SERVICIO[indice];
+    const siguiente = ETAPAS_SERVICIO[indice + 1];
+    const consecuencia = siguiente
+      ? `Se habilitará "${siguiente}" para el técnico.`
+      : "Ya no quedarán etapas por trabajar.";
+    if (!window.confirm(`¿Finalizar la etapa "${etapa}"? No se podrán agregar más visitas a esta etapa. ${consecuencia}`)) return;
+
+    setFinalizandoId(visita.visitaId);
+    try {
+      await finalizarEtapaServicio(visita.visitaId);
+    } catch (e) {
+      return mostrarError(e, "No se pudo finalizar la etapa.");
+    } finally {
+      setFinalizandoId(null);
+    }
+
+    if (siguiente) {
+      agregarNotificacion({
+        rolDestino: 'tecnico',
+        tecnicoDestino: visita.tecnicoNombre,
+        solicitudId: visita.solicitudId,
+        mensaje: `Se habilitó la etapa "${siguiente}" del servicio de ${visita.clienteNombre}.`,
+      });
+    }
+    setToast({ show: true, type: "success", message: `La etapa "${etapa}" se finalizó.` });
+  };
+
   return (
     <div className="flex flex-1 bg-[#DCE4F3] font-sans antialiased">
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <h1 className="text-4xl font-bold text-black tracking-tight mb-8">Visitas Técnicas</h1>
 
         <div className="my-5">
-          <VisitasTecnicasTable
-            visitas={visitas}
-            visitaSeleccionadaId={visitaSeleccionada?.visitaId ?? null}
-            onSeleccionar={seleccionarServicio}
-          />
+          <VisitasTecnicasTable visitas={visitas} />
         </div>
 
         <h2 className="text-2xl font-bold text-black tracking-tight mt-10 mb-4">Seguimiento por etapas</h2>
@@ -143,7 +167,14 @@ export default function VisitasTecnicasScreen() {
             visitas={visitas}
             visitasProgramadas={visitasProgramadas}
             seleccion={seleccionDetalle}
+            finalizandoId={finalizandoId}
             onSeleccionar={setSeleccionDetalle}
+            onAgregar={(visita, tipo) => setProgramacion({ visita, tipo, editando: null })}
+            onEditar={(visita, visitaProgramada) =>
+              setProgramacion({ visita, tipo: visitaProgramada.tipo, editando: visitaProgramada })
+            }
+            onEliminar={setVisitaProgramadaEliminar}
+            onFinalizarEtapa={handleFinalizarEtapa}
           />
           {detalleVisita && (
             <div className="xl:sticky xl:top-4">
@@ -152,77 +183,13 @@ export default function VisitasTecnicasScreen() {
           )}
         </div>
 
-        {visitaSeleccionada && (
-          <div className="mt-8 bg-white rounded-2xl shadow-sm p-6">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800">
-                  Agenda de visitas — {visitaSeleccionada.clienteNombre}
-                </h2>
-                <p className="text-sm text-slate-500">Técnico: {visitaSeleccionada.tecnicoNombre}</p>
-              </div>
-              <button
-                onClick={abrirNuevaVisita}
-                disabled={visitaSeleccionada.cierre !== undefined}
-                title={visitaSeleccionada.cierre ? 'El servicio ya fue cerrado' : undefined}
-                className="flex items-center gap-1 px-5 py-1.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all shadow-sm cursor-pointer disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-4 h-4" />
-                Agregar
-              </button>
-            </div>
-
-            {programadasDelServicio.length > 0 ? (
-              <ul className="flex flex-col gap-2.5">
-                {programadasDelServicio.map((visita) => (
-                  <li
-                    key={visita.visitaProgramadaId}
-                    className="flex items-start justify-between gap-4 bg-slate-50 rounded-xl px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-2 font-semibold text-slate-800 text-sm">
-                        <Clock className="w-4 h-4 text-slate-500 shrink-0" />
-                        {formatearFechaISO(visita.fecha)} · {visita.horaInicio} - {visita.horaFin}
-                      </p>
-                      <p className="text-sm text-slate-600 mt-1">{visita.descripcionTareas}</p>
-                      {visita.avance && <AvanceVisitaDetalle avance={visita.avance} />}
-                    </div>
-                    {visita.avance ? (
-                      <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border bg-emerald-100 text-emerald-700 border-emerald-300/60">
-                        COMPLETADA
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-2 shrink-0 text-gray-700">
-                        <button
-                          onClick={() => abrirEditarVisita(visita)}
-                          aria-label="Reprogramar visita"
-                          className="hover:text-black cursor-pointer"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setVisitaProgramadaEliminar(visita)}
-                          aria-label="Eliminar visita"
-                          className="hover:text-red-600 cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-slate-400 text-sm">Aún no hay visitas programadas para este servicio.</p>
-            )}
-          </div>
-        )}
-
         <VisitaProgramadaModal
-          isOpen={isModalOpen}
-          clienteNombre={visitaSeleccionada?.clienteNombre ?? ''}
-          visitaProgramada={visitaProgramadaEditando}
-          onClose={cerrarModal}
+          isOpen={programacion !== null}
+          clienteNombre={programacion?.visita.clienteNombre ?? ''}
+          tipo={programacion?.tipo ?? 'INSTALACION'}
+          garantiaFin={garantiaFin}
+          visitaProgramada={programacion?.editando ?? null}
+          onClose={() => setProgramacion(null)}
           onGuardar={handleGuardarVisitaProgramada}
         />
 
@@ -245,7 +212,7 @@ export default function VisitasTecnicasScreen() {
 
         <Toast
           show={toast.show}
-          type="error"
+          type={toast.type}
           message={toast.message}
           onClose={() => setToast((t) => ({ ...t, show: false }))}
         />
