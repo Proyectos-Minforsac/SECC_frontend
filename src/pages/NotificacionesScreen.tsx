@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom"
 import { useNotificaciones } from "../hooks/useNotificaciones"
 import { useSolicitudes } from "../hooks/useSolicitudes"
 import { marcarComoLeida, type Notificacion } from "../services/notificaciones"
+import { formatearFechaHora } from "../services/visitas"
 
 export default function NotificacionesScreen() {
   const notificaciones = useNotificaciones();
@@ -39,7 +40,7 @@ export default function NotificacionesScreen() {
                 className="flex-1 text-left cursor-pointer"
               >
                 <p className={`text-sm ${notificacion.leida ? "" : "font-semibold"}`}>{notificacion.mensaje}</p>
-                <p className="text-xs text-slate-400 mt-1">{notificacion.fecha}</p>
+                <p className="text-xs text-slate-400 mt-1">{formatearFechaHora(notificacion.fecha)}</p>
               </button>
 
               {notificacion.tipo === 'DIAGNOSTICO_COMPLETADO' && (

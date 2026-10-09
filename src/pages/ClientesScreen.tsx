@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import SideBarComponent from '../components/SideBar';
 import SearchBar from '../components/SearchBar';
 import { obtenerClientes, crearCliente, editarCliente, eliminarCliente, type Cliente } from '../services/clientes';
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -188,9 +187,8 @@ export const ClientesScreen = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#DCE4F3] font-sans antialiased">
+    <div className="flex flex-1 bg-[#DCE4F3] font-sans antialiased">
 
-      <SideBarComponent />
 
       {/* 2. CONTENIDO PRINCIPAL */}
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
@@ -316,7 +314,7 @@ export const ClientesScreen = () => {
           </ AgregarEditarModal>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl">
           <SearchBar
             onBuscar={(texto) => {
               setBusqueda(texto);

@@ -1,23 +1,34 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { RUTA_INICIO, useAuth, type Rol } from '../context/AuthContext';
+import { RUTA_INICIO, useAuth } from '../context/AuthContext';
+import { login } from '../services/auth';
 import MinforSacImage from './../assets/logo_minforsac.jpg';
 
 export const LoginScreen = () => {
-  const [email, setEmail] = useState('');
+  const [nombre, setNombre] = useState('');
   const [password, setPassword] = useState('');
-  // Temporal: mientras no exista autenticación en el backend, el rol se elige aquí.
-  const [rol, setRol] = useState<Rol>('empleado');
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false);
 
   const { usuario, iniciarSesion } = useAuth();
   const navigate = useNavigate();
 
   if (usuario) return <Navigate to={RUTA_INICIO[usuario.rol]} replace />;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    iniciarSesion({ nombre: email.split('@')[0], rol });
-    navigate(RUTA_INICIO[rol], { replace: true });
+    setError('');
+    setCargando(true);
+
+    try {
+      const autenticado = await login(nombre.trim(), password);
+      iniciarSesion({ nombre: autenticado.nombre, rol: autenticado.rol });
+      navigate(RUTA_INICIO[autenticado.rol], { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
@@ -44,13 +55,14 @@ export const LoginScreen = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Campo Correo Electrónico */}
+          {/* Campo Usuario */}
           <div>
             <input
-              type="email"
-              placeholder="Correo electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              placeholder="Usuario"
+              autoComplete="username"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
               className="w-full px-5 py-3.5 rounded-full bg-white text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#6BA4E8] transition-all text-base"
               required
             />
@@ -61,6 +73,7 @@ export const LoginScreen = () => {
             <input
               type="password"
               placeholder="Contraseña"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-5 py-3.5 rounded-full bg-white text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#6BA4E8] transition-all text-base"
@@ -68,25 +81,21 @@ export const LoginScreen = () => {
             />
           </div>
 
-          {/* Rol (temporal) */}
-          <div>
-            <select
-              value={rol}
-              onChange={(e) => setRol(e.target.value as Rol)}
-              className="w-full px-5 py-3.5 rounded-full bg-white text-gray-900 outline-none focus:ring-2 focus:ring-[#6BA4E8] transition-all text-base cursor-pointer"
-            >
-              <option value="empleado">Empleado</option>
-              <option value="tecnico">Técnico</option>
-            </select>
-          </div>
+          {/* Mensaje de error */}
+          {error && (
+            <p role="alert" className="text-sm text-red-300 text-center">
+              {error}
+            </p>
+          )}
 
           {/* Botón Ingresar */}
           <div className="pt-2 flex justify-center">
             <button
               type="submit"
-              className="px-10 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-2xl hover:bg-white active:scale-95 transition-all text-base shadow-sm cursor-pointer"
+              disabled={cargando}
+              className="px-10 py-2.5 bg-[#E2E4E9] text-gray-900 font-medium rounded-2xl hover:bg-white active:scale-95 transition-all text-base shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Ingresar
+              {cargando ? 'Ingresando...' : 'Ingresar'}
             </button>
           </div>
         </form>

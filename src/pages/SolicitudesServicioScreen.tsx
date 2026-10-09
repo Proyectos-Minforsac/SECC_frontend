@@ -150,10 +150,19 @@ export default function SolicitudesServicioScreen() {
         descripcion: descripcion.trim(),
         tecnicoIds: tecnicosSeleccionados.map((t) => t.tecnicoId),
       };
-      if (solicitudEditando) {
-        await editarSolicitud(solicitudEditando.solicitudId, datos);
-      } else {
-        await crearSolicitud(datos);
+      const guardada = solicitudEditando
+        ? await editarSolicitud(solicitudEditando.solicitudId, datos)
+        : await crearSolicitud(datos);
+
+      // Al editar solo se avisa a los técnicos que se agregaron; los que ya tenían la solicitud ya fueron avisados.
+      const yaAvisados = new Set(solicitudEditando?.tecnicoIds ?? []);
+      for (const tecnico of tecnicosSeleccionados.filter((t) => !yaAvisados.has(t.tecnicoId))) {
+        agregarNotificacion({
+          rolDestino: 'tecnico',
+          tecnicoDestino: tecnico.nombre,
+          solicitudId: guardada.solicitudId,
+          mensaje: `Tienes una nueva solicitud de servicio de ${guardada.clienteNombre}. Revisa los detalles en Solicitudes de Servicios y envía tu oferta de visita.`,
+        });
       }
       cerrarModal();
     } catch (err) {

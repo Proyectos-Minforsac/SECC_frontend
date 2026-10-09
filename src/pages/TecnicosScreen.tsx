@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from 'react-router-dom';
-import SideBarComponent from "../components/SideBar"
 import SearchBar from "../components/SearchBar";
 import { obtenerTecnicos, crearTecnico, editarTecnico, eliminarTecnico, type NuevoTecnico, type Tecnico } from "../services/tecnicos";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -222,10 +221,8 @@ export default function TecnicosScreen() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#DCE4F3] font-sans antialiased select-none">
+    <div className="flex flex-1 bg-[#DCE4F3] font-sans antialiased select-none">
 
-      {/* 1. SIDEBAR (Menú Lateral) */}
-      <SideBarComponent />
 
       {/* 2. ÁREA DE CONTENIDO PRINCIPAL */}
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
@@ -432,7 +429,7 @@ export default function TecnicosScreen() {
         </ AgregarEditarModal>
 
         {/* Barra de Búsqueda y Filtros */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl">
           <SearchBar
             onBuscar={(texto) => {
               setBusqueda(texto);
