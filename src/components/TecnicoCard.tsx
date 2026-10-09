@@ -84,10 +84,6 @@ export default function TecnicoCard({ nombre, numeroDocumento, telefono, ubicaci
           {servicio === 'Aire Condicionado' ? (
             <TablaAireCondicionado precios={precios} />
           ) : null}
-
-          <button className="mt-2 w-full bg-[#343C8F] text-white py-3 rounded-xl hover:bg-[#222861] transition-all cursor-pointer">
-            Asignar visita técnica
-          </button>
         </div>
 
       </div>

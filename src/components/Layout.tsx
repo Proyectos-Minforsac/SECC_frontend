@@ -2,8 +2,10 @@ import { Outlet } from "react-router-dom"
 import SideBarComponent from "./SideBar"
 import NavBar from "./NavBar"
 import { useRecordatoriosMantenimiento } from "../hooks/useRecordatoriosMantenimiento"
+import { useSincronizarNotificaciones } from "../hooks/useNotificaciones"
 
 export default function Layout() {
+  useSincronizarNotificaciones();
   useRecordatoriosMantenimiento();
 
   return (

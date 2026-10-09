@@ -11,7 +11,6 @@ const MENU_POR_ROL: Record<Rol, { name: string; route: string }[]> = {
     { name: 'Técnicos', route: '/tecnicos' },
     { name: 'Cotizaciones', route: '/cotizaciones' },
     { name: 'Visitas Técnicas', route: '/visitas-tecnicas' },
-    { name: 'Mantenimientos', route: '/mantenimientos' },
   ],
   tecnico: [
     { name: 'Solicitudes de Servicios', route: '/solicitudes-tecnico' },
