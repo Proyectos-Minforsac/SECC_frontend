@@ -1,4 +1,4 @@
-import { ordenarEvidencias, type EvidenciaVisita, type VisitaTecnica } from './visitas';
+import { nombreDeTipo, ordenarEvidencias, type EvidenciaVisita, type VisitaTecnica } from './visitas';
 import { claveVisitaConformidad } from './conformidad';
 import { formatearFechaISO, ordenarPorFechaHora, type VisitaProgramada } from './visitasProgramadas';
 
@@ -25,6 +25,8 @@ export interface DetalleVisita {
   claveConformidad: string;
   // true cuando el técnico ya envió el reporte de esta visita.
   reporteEnviado: boolean;
+  // El documento de conformidad se pide desde la etapa de Instalación; el diagnóstico inicial no lo lleva.
+  requiereConformidad: boolean;
 }
 
 export const esSeleccionVisita = (seleccion: SeleccionVisita | null, visitaId: number, visitaProgramadaId?: number) =>
@@ -50,21 +52,24 @@ export const detalleVisitaDiagnostico = (visita: VisitaTecnica): DetalleVisita =
   numeroVisita: 1,
   claveConformidad: claveVisitaConformidad(visita.visitaId),
   reporteEnviado: visita.diagnostico !== undefined,
+  requiereConformidad: false,
 });
 
-// `hermanas` son todas las visitas programadas del mismo servicio; define el número de la visita.
+// `hermanas` son todas las visitas programadas del mismo servicio; el número de la visita
+// se cuenta solo entre las de su misma etapa.
 export const detalleVisitaProgramada = (
   visita: VisitaTecnica,
   programada: VisitaProgramada,
   hermanas: VisitaProgramada[],
 ): DetalleVisita => {
-  const numero = ordenarPorFechaHora(hermanas).findIndex(
+  const numero = ordenarPorFechaHora(hermanas.filter((v) => v.tipo === programada.tipo)).findIndex(
     (v) => v.visitaProgramadaId === programada.visitaProgramadaId
   ) + 1;
+  const etapa = nombreDeTipo(programada.tipo);
 
   return {
-    nombre: `Visita ${numero} de instalación`,
-    etapa: 'Instalación',
+    nombre: `Visita ${numero} de ${etapa.toLowerCase()}`,
+    etapa,
     clienteNombre: visita.clienteNombre,
     tecnicoNombre: visita.tecnicoNombre,
     fechas: [
@@ -79,5 +84,6 @@ export const detalleVisitaProgramada = (
     numeroVisita: numero,
     claveConformidad: claveVisitaConformidad(visita.visitaId, programada.visitaProgramadaId),
     reporteEnviado: programada.avance !== undefined,
+    requiereConformidad: true,
   };
 };

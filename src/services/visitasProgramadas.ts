@@ -1,4 +1,4 @@
-import type { EvidenciaVisita } from './visitas';
+import type { EvidenciaVisita, TipoVisita } from './visitas';
 import { pedir } from './http';
 
 // Registro que el técnico deja al terminar una visita programada.
@@ -13,6 +13,8 @@ export interface VisitaProgramada {
   visitaProgramadaId: number;
   // Referencia al servicio (VisitaTecnica) al que pertenece esta cita.
   visitaId: number;
+  // Etapa del servicio a la que pertenece la visita.
+  tipo: TipoVisita;
   fecha: string; // YYYY-MM-DD
   horaInicio: string; // HH:mm
   horaFin: string; // HH:mm
@@ -108,6 +110,10 @@ export const guardarAvanceVisitaProgramada = async (visitaProgramadaId: number, 
 
 export const ordenarPorFechaHora = (lista: VisitaProgramada[]) =>
   [...lista].sort((a, b) => `${a.fecha}${a.horaInicio}`.localeCompare(`${b.fecha}${b.horaInicio}`));
+
+// Visitas de una etapa de un servicio, en orden cronológico.
+export const visitasDeEtapa = (lista: VisitaProgramada[], visitaId: number, tipo: TipoVisita) =>
+  ordenarPorFechaHora(lista.filter((v) => v.visitaId === visitaId && v.tipo === tipo));
 
 // La visita "del momento" es la primera, en orden cronológico, que aún no tiene avance:
 // es la única donde el técnico puede ingresar datos.

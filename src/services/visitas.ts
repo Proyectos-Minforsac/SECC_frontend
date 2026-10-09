@@ -10,6 +10,15 @@ export const ETAPAS_SERVICIO = [
   'Soporte técnico',
 ] as const;
 
+// Tipo de las visitas programadas de cada etapa posterior al diagnóstico, en el mismo orden que ETAPAS_SERVICIO.
+export type TipoVisita = 'INSTALACION' | 'MANTENIMIENTO' | 'SOPORTE';
+export const TIPOS_VISITA: readonly TipoVisita[] = ['INSTALACION', 'MANTENIMIENTO', 'SOPORTE'];
+
+// El diagnóstico (índice 0) no tiene visitas programadas, por eso devuelve null.
+export const tipoDeEtapa = (indice: number): TipoVisita | null => TIPOS_VISITA[indice - 1] ?? null;
+
+export const nombreDeTipo = (tipo: TipoVisita) => ETAPAS_SERVICIO[TIPOS_VISITA.indexOf(tipo) + 1];
+
 export interface EvidenciaVisita {
   nombre: string;
   url: string;
@@ -58,6 +67,8 @@ export interface VisitaTecnica {
   descripcion: string;
   fecha: string;
   estado: EstadoVisita;
+  // Etapas posteriores al diagnóstico que el empleado ya dio por terminadas.
+  etapasFinalizadas: number;
   diagnostico?: DiagnosticoVisita;
   cierre?: CierreServicio;
 }
@@ -68,23 +79,25 @@ export const ESTILO_ESTADO_VISITA: Record<EstadoVisita, string> = {
   'ACTIVO': 'bg-emerald-100 text-emerald-700 border-emerald-300/60',
 };
 
-// Cantidad de etapas ya completadas.
+// Cantidad de etapas ya completadas: el diagnóstico (al enviarse) y las que el empleado finalizó.
 export const etapasCompletadas = (visita: VisitaTecnica) =>
-  visita.estado === 'AUTORIZADA' ? 0 : 1;
+  visita.estado === 'AUTORIZADA' ? 0 : 1 + visita.etapasFinalizadas;
 
-// Etapas visibles y desbloqueadas para el técnico. Con el servicio activo se habilitan
-// todas las posteriores al diagnóstico, aunque solo la etapa activa admite ingreso de datos.
-export const etapaHabilitada = (visita: VisitaTecnica, indice: number) =>
-  indice < etapasCompletadas(visita) || (visita.estado === 'ACTIVO' && indice >= 1);
-
-// Índice de la etapa habilitada para trabajar ahora mismo, o null si no hay ninguna
-// (p.ej. tras completar el diagnóstico, la Instalación queda bloqueada hasta que el
-// empleado registre la aceptación de la cotización y active el servicio).
+// Índice de la etapa en la que se trabaja ahora mismo, o null si no hay ninguna: tras completar el
+// diagnóstico la Instalación queda bloqueada hasta que el empleado registre la aceptación de la
+// cotización y active el servicio, y al final no quedan etapas por finalizar.
 export const etapaActivaIndice = (visita: VisitaTecnica): number | null => {
   if (visita.estado === 'AUTORIZADA') return 0;
-  if (visita.estado === 'ACTIVO') return 1;
-  return null;
+  if (visita.estado !== 'ACTIVO') return null;
+
+  const indice = etapasCompletadas(visita);
+  return indice < ETAPAS_SERVICIO.length ? indice : null;
 }
+
+// Etapas visibles y desbloqueadas para el técnico: las ya completadas y la activa.
+// Las siguientes se muestran bloqueadas hasta que el empleado finalice la anterior.
+export const etapaHabilitada = (visita: VisitaTecnica, indice: number) =>
+  indice < etapasCompletadas(visita) || indice === etapaActivaIndice(visita);
 
 // Las visitas se cargan del backend y se guardan aquí para compartirlas entre las pantallas del empleado
 // y del técnico. La visita la crea el backend al autorizar el viaje; cada operación devuelve la visita
@@ -152,6 +165,10 @@ export const activarVisitaPorSolicitud = async (solicitudId: number): Promise<Vi
   );
   return visita ? guardarVisita(visita) : null;
 }
+
+// El empleado da por terminada la etapa en curso y habilita la siguiente para el técnico.
+export const finalizarEtapaServicio = async (visitaId: number) =>
+  guardarVisita(await pedir<VisitaTecnica>(`/visitas/${visitaId}/finalizar-etapa`, 'POST', {}, 'No se pudo finalizar la etapa'));
 
 export const registrarCierreServicio = async (visitaId: number, carpetaUrl: string) =>
   guardarVisita(await pedir<VisitaTecnica>(`/visitas/${visitaId}/cierre`, 'POST', { carpetaUrl }, 'No se pudo registrar el cierre del servicio'));
