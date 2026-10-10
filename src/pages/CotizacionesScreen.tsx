@@ -1,26 +1,31 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import CotizacionesTable from '../components/CotizacionesTable';
 import PaginacionComponente from '../components/Paginacion';
 import LoadingSpinner from '../components/LoadingSpinner';
+import RechazarCotizacionModal from '../components/RechazarCotizacionModal';
+import Toast from '../components/Toast';
 import {
   obtenerCotizaciones,
   actualizarEstadoCotizacion,
   type CotizacionListada,
-  type EstadoCotizacion,
 } from '../services/cotizaciones';
-import { activarVisitaPorSolicitud } from '../services/visitas';
+import { activarVisitaPorSolicitud, cancelarVisitaPorSolicitud } from '../services/visitas';
 import { agregarNotificacion } from '../services/notificaciones';
 
 export const CotizacionesScreen = () => {
-  const navigate = useNavigate();
-
   // Tabla general de cotizaciones (pendientes, aceptadas y rechazadas)
   const [cotizaciones, setCotizaciones] = useState<CotizacionListada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [paginaActual, setPaginaActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [actualizandoEstadoId, setActualizandoEstadoId] = useState<number | null>(null);
+  // Cotización cuyo rechazo se está confirmando en el modal del motivo
+  const [cotizacionARechazar, setCotizacionARechazar] = useState<CotizacionListada | null>(null);
+  const [toast, setToast] = useState<{ show: boolean; type: 'success' | 'error'; title?: string; message: string }>({
+    show: false,
+    type: 'success',
+    message: '',
+  });
 
   const cargarCotizaciones = async (pagina: number = paginaActual) => {
     setCargando(true);
@@ -39,14 +44,20 @@ export const CotizacionesScreen = () => {
     cargarCotizaciones(paginaActual);
   }, [paginaActual]);
 
-  const handleCambiarEstadoCotizacion = async (cotizacionId: number, estado: EstadoCotizacion) => {
+  const mostrarToastError = (error: unknown, porDefecto: string) =>
+    setToast({ show: true, type: 'error', message: error instanceof Error ? error.message : porDefecto });
+
+  const handleAceptarCotizacion = async (cotizacionId: number) => {
+    const numero = cotizaciones.find((c) => c.cotizacionId === cotizacionId)?.numeroCotizacion ?? '';
+
     setActualizandoEstadoId(cotizacionId);
     try {
-      const cotizacion = await actualizarEstadoCotizacion(cotizacionId, estado);
+      const cotizacion = await actualizarEstadoCotizacion(cotizacionId, 'ACEPTADA');
 
-      // Si el cliente aceptó y la cotización nació de una visita técnica, se activa
-      // el servicio: desbloquea la etapa de Instalación para el técnico.
-      if (estado === 'ACEPTADA' && cotizacion.solicitudId) {
+      // Si la cotización nació de una visita técnica, se activa el servicio:
+      // desbloquea las etapas siguientes para el técnico.
+      let tecnicoAvisado = false;
+      if (cotizacion.solicitudId) {
         const visita = await activarVisitaPorSolicitud(Number(cotizacion.solicitudId));
         if (visita) {
           agregarNotificacion({
@@ -55,14 +66,62 @@ export const CotizacionesScreen = () => {
             solicitudId: visita.solicitudId,
             mensaje: `El cliente ${visita.clienteNombre} aceptó la cotización. El servicio ya está activo, puedes continuar con la instalación.`,
           });
+          tecnicoAvisado = true;
         }
       }
 
+      setToast({
+        show: true,
+        type: 'success',
+        title: 'Cotización aceptada',
+        message: tecnicoAvisado ? `${numero} fue aceptada y se avisó al técnico.` : `${numero} fue aceptada.`,
+      });
       await cargarCotizaciones(paginaActual);
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'No se pudo actualizar la cotización.');
+      mostrarToastError(error, 'No se pudo aceptar la cotización.');
     } finally {
       setActualizandoEstadoId(null);
+    }
+  };
+
+  // Al rechazar, el servicio se cancela porque no hubo acuerdo con el cliente: se avisa al técnico con el motivo.
+  const handleRechazarCotizacion = async (motivo: string) => {
+    if (!cotizacionARechazar) return;
+    const { cotizacionId, numeroCotizacion } = cotizacionARechazar;
+
+    setActualizandoEstadoId(cotizacionId);
+    try {
+      const cotizacion = await actualizarEstadoCotizacion(cotizacionId, 'RECHAZADA', motivo);
+
+      let tecnicoAvisado = false;
+      if (cotizacion.solicitudId) {
+        const visita = await cancelarVisitaPorSolicitud(Number(cotizacion.solicitudId), motivo);
+        if (visita) {
+          agregarNotificacion({
+            rolDestino: 'tecnico',
+            tecnicoDestino: visita.tecnicoNombre,
+            solicitudId: visita.solicitudId,
+            mensaje: `El cliente ${visita.clienteNombre} rechazó la cotización y el servicio fue cancelado. Motivo: ${motivo}`,
+          });
+          tecnicoAvisado = true;
+        }
+      }
+
+      setToast({
+        show: true,
+        type: 'error',
+        title: 'Cotización rechazada',
+        message: tecnicoAvisado
+          ? `${numeroCotizacion} fue rechazada. El servicio se canceló y se avisó al técnico.`
+          : `${numeroCotizacion} fue rechazada.`,
+      });
+    } catch (error) {
+      mostrarToastError(error, 'No se pudo rechazar la cotización.');
+    } finally {
+      setCotizacionARechazar(null);
+      setActualizandoEstadoId(null);
+      // Se recarga también si falló: el rechazo pudo haberse guardado antes del error.
+      await cargarCotizaciones(paginaActual);
     }
   };
 
@@ -73,11 +132,6 @@ export const CotizacionesScreen = () => {
         {/* Cabecera: Título y botón Agregar */}
         <div className="flex items-center gap-4 mb-8">
           <h1 className="text-4xl font-bold text-black tracking-tight">Cotizaciones</h1>
-          <button
-            onClick={() => navigate('/cotizaciones/nueva')}
-            className="px-5 py-1.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all flex items-center gap-1 shadow-sm cursor-pointer">
-            Agregar
-          </button>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -90,8 +144,8 @@ export const CotizacionesScreen = () => {
             <CotizacionesTable
               cotizaciones={cotizaciones}
               actualizandoId={actualizandoEstadoId}
-              onAceptar={(id) => handleCambiarEstadoCotizacion(id, 'ACEPTADA')}
-              onRechazar={(id) => handleCambiarEstadoCotizacion(id, 'RECHAZADA')}
+              onAceptar={handleAceptarCotizacion}
+              onRechazar={(id) => setCotizacionARechazar(cotizaciones.find((c) => c.cotizacionId === id) ?? null)}
             />
           )}
         </div>
@@ -100,6 +154,23 @@ export const CotizacionesScreen = () => {
           paginaActual={paginaActual}
           totalPaginas={totalPaginas}
           onCambiarPagina={setPaginaActual}
+        />
+
+        <RechazarCotizacionModal
+          isOpen={cotizacionARechazar !== null}
+          numeroCotizacion={cotizacionARechazar?.numeroCotizacion ?? ''}
+          clienteNombre={cotizacionARechazar?.clienteNombre ?? ''}
+          guardando={actualizandoEstadoId !== null}
+          onClose={() => setCotizacionARechazar(null)}
+          onConfirmar={handleRechazarCotizacion}
+        />
+
+        <Toast
+          show={toast.show}
+          type={toast.type}
+          title={toast.title}
+          message={toast.message}
+          onClose={() => setToast((t) => ({ ...t, show: false }))}
         />
       </main>
     </div>

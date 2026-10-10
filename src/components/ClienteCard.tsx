@@ -49,10 +49,6 @@ export default function ClienteCard({ nombre, direccion, ruc, correo_electronico
             <span className="font-semibold">Tipo Persona:</span>{" "}
             {tipo_persona}
           </p>
-
-          <button className="mt-4 w-full bg-[#343C8F] text-white py-3 rounded-xl hover:bg-[#222861] transition-all cursor-pointer">
-            Agregar solicitud
-          </button>
         </div>
 
       </div>

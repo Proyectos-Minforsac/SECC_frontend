@@ -3,12 +3,14 @@ import { useEffect } from 'react';
 interface ToastProps {
   show: boolean,
   type?: 'success' | 'error',
+  // Reemplaza el título por defecto ("Registro exitoso" / "Ocurrió un error")
+  title?: string,
   message: string,
   onClose: () => void,
   duration?: number,
 }
 
-export default function Toast({ show, type = 'success', message, onClose, duration = 3500 }: ToastProps) {
+export default function Toast({ show, type = 'success', title, message, onClose, duration = 3500 }: ToastProps) {
 	useEffect(() => {
 		if (!show) return;
 		const timer = setTimeout(() => onClose(), duration);
@@ -35,7 +37,7 @@ export default function Toast({ show, type = 'success', message, onClose, durati
 				</div>
 				<div className="flex-1">
 					<p className="text-sm font-semibold">
-						{isSuccess ? 'Registro exitoso' : 'Ocurrió un error'}
+						{title ?? (isSuccess ? 'Registro exitoso' : 'Ocurrió un error')}
 					</p>
 					<p className="text-xs mt-0.5 opacity-90">{message}</p>
 				</div>

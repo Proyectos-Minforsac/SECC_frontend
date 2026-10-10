@@ -1,6 +1,6 @@
 import { pedir } from './http';
 
-export type EstadoVisita ='AUTORIZADA' | 'DIAGNÓSTICO COMPLETADO' | 'ACTIVO';
+export type EstadoVisita ='AUTORIZADA' | 'DIAGNÓSTICO COMPLETADO' | 'ACTIVO' | 'CANCELADA';
 
 // Etapas generales de un servicio; se activan de forma secuencial.
 export const ETAPAS_SERVICIO = [
@@ -58,6 +58,13 @@ export interface CierreServicio {
   carpetaUrl: string;
 }
 
+// Se registra cuando el cliente rechaza la cotización: el servicio se cancela y ya no avanza.
+export interface CancelacionServicio {
+  // Instante ISO de la cancelación.
+  fecha: string;
+  motivo: string;
+}
+
 export interface VisitaTecnica {
   visitaId: number;
   solicitudId: number;
@@ -71,12 +78,14 @@ export interface VisitaTecnica {
   etapasFinalizadas: number;
   diagnostico?: DiagnosticoVisita;
   cierre?: CierreServicio;
+  cancelacion?: CancelacionServicio;
 }
 
 export const ESTILO_ESTADO_VISITA: Record<EstadoVisita, string> = {
   'AUTORIZADA': 'bg-indigo-100 text-indigo-700 border-indigo-300/60',
   'DIAGNÓSTICO COMPLETADO': 'bg-amber-100 text-amber-700 border-amber-300/60',
   'ACTIVO': 'bg-emerald-100 text-emerald-700 border-emerald-300/60',
+  'CANCELADA': 'bg-rose-100 text-rose-700 border-rose-300/60',
 };
 
 // Cantidad de etapas ya completadas: el diagnóstico (al enviarse) y las que el empleado finalizó.
@@ -162,6 +171,18 @@ export const activarVisitaPorSolicitud = async (solicitudId: number): Promise<Vi
     'POST',
     {},
     'No se pudo activar el servicio'
+  );
+  return visita ? guardarVisita(visita) : null;
+}
+
+// Se llama al rechazar la cotización ligada a esta solicitud: cancela el servicio (y la solicitud) y deja
+// bloqueadas todas las etapas. Devuelve la visita cancelada, o null si la solicitud no tiene una.
+export const cancelarVisitaPorSolicitud = async (solicitudId: number, motivo: string): Promise<VisitaTecnica | null> => {
+  const visita = await pedir<VisitaTecnica | null>(
+    `/solicitudes/${solicitudId}/cancelar-visita`,
+    'POST',
+    { motivo },
+    'No se pudo cancelar el servicio'
   );
   return visita ? guardarVisita(visita) : null;
 }

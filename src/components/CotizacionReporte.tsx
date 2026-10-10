@@ -1,5 +1,7 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import type { CotizacionData, CotizacionItem } from '../services/cotizaciones';
+import CotizacionMinfoLogo from '../assets/cotizacion_logo_minforsac.png';
+import CuentasBancariasMinfo from '../assets/nuevo_logo_cuentas.png';
 
 interface CotizacionDocumentProps {
   data: CotizacionData;
@@ -25,6 +27,11 @@ const styles = StyleSheet.create({
   companyDetails: {
     width: '60%',
   },
+  // El alto se calcula solo según la proporción de la imagen (1442x465)
+  logo: {
+    width: 160,
+    marginBottom: 6,
+  },
   companyName: {
     fontSize: 12,
     fontWeight: 'bold',
@@ -45,7 +52,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1A365D',
   },
-  
+
   // Información del Cliente
   sectionGrid: {
     flexDirection: 'row',
@@ -90,7 +97,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   colItems: { width: '10%', textAlign: 'center' },
-  colName: {width: '20%', textAlign: 'center'},
+  colName: { width: '20%', textAlign: 'center' },
   colDesc: { width: '50%', paddingLeft: 5 },
   colQty: { width: '12%', textAlign: 'center' },
   colUnitPrice: { width: '14%', textAlign: 'right' },
@@ -145,6 +152,10 @@ const styles = StyleSheet.create({
   termItem: {
     marginBottom: 3,
   },
+  cuentasBancarias: {
+    width: "100%",
+    marginTop: "10px"
+  },
 
   // Fila de título / sección dentro de la tabla
   tituloRow: {
@@ -180,7 +191,7 @@ const construirDescripcion = (row: CotizacionItem) => {
   return base ? `${base}\nDetalles impresora: ${extras}` : `Detalles impresora: ${extras}`;
 };
 
-export const CotizacionDocument = ({ data } : CotizacionDocumentProps) => {
+export const CotizacionDocument = ({ data }: CotizacionDocumentProps) => {
   const items = data?.items ?? [];
 
   const subtotal = data?.subtotal ?? items.reduce((acc, item) => acc + (item.total ?? 0), 0);
@@ -217,11 +228,11 @@ export const CotizacionDocument = ({ data } : CotizacionDocumentProps) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        
+
         {/* Encabezado */}
         <View style={styles.headerContainer}>
           <View style={styles.companyDetails}>
-            <Text style={styles.companyName}>Multiversicios Informáticos S.A.C</Text>
+            <Image src={CotizacionMinfoLogo} style={styles.logo} />
             <Text>RUC. : 20508243490</Text>
             <Text>DIRECCIÓN: JR. LAS CALÉNDULAS 688 LAS FLORES - S.J.L.</Text>
             <Text>TELÉFONO: 376 - 0122</Text>
@@ -312,6 +323,12 @@ export const CotizacionDocument = ({ data } : CotizacionDocumentProps) => {
             <Text style={styles.termItem}>CELULAR: 989725259</Text>
             <Text style={styles.termItem}>E-MAIL: javiles@minforsac.com.pe</Text>
           </View>
+        </View>
+
+        <View>
+          <Image src={CuentasBancariasMinfo} style={styles.cuentasBancarias}>
+
+          </Image>
         </View>
 
       </Page>

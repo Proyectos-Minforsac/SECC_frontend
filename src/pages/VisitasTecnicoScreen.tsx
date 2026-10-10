@@ -21,6 +21,7 @@ import {
   etapasCompletadas,
   etapaActivaIndice,
   etapaHabilitada,
+  formatearFechaHora,
   guardarDiagnostico,
   tipoDeEtapa,
   type DiagnosticoVisita,
@@ -131,6 +132,13 @@ export default function VisitasTecnicoScreen() {
 
                   {expandida && (
                     <ul className="border-t border-slate-100 divide-y divide-slate-100">
+                      {visita.cancelacion && (
+                        <li className="px-5 py-3 bg-rose-50 text-sm text-rose-800">
+                          <p className="font-semibold">Servicio cancelado: no se llegó a un acuerdo con el cliente.</p>
+                          <p className="mt-0.5">Motivo: {visita.cancelacion.motivo}</p>
+                          <p className="mt-0.5 text-xs text-rose-600">{formatearFechaHora(visita.cancelacion.fecha)}</p>
+                        </li>
+                      )}
                       {ETAPAS_SERVICIO.map((etapa, indice) => {
                         const completada = indice < completadas;
                         const activa = indice === activaIndice;
@@ -160,9 +168,11 @@ export default function VisitasTecnicoScreen() {
                                     ? "Completada"
                                     : activa
                                       ? "Activa"
-                                      : esInstalacion && esperandoCotizacion
-                                        ? "Esperando aceptación de la cotización"
-                                        : "Bloqueada hasta finalizar la etapa anterior"}
+                                      : visita.estado === "CANCELADA"
+                                        ? "Servicio cancelado"
+                                        : esInstalacion && esperandoCotizacion
+                                          ? "Esperando aceptación de la cotización"
+                                          : "Bloqueada hasta finalizar la etapa anterior"}
                                 </span>
                               </div>
 
