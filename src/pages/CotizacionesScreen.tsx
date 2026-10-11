@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import CotizacionesTable from '../components/CotizacionesTable';
+import CotizacionesTable, { type ActualizacionCotizacion } from '../components/CotizacionesTable';
 import PaginacionComponente from '../components/Paginacion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import RechazarCotizacionModal from '../components/RechazarCotizacionModal';
@@ -18,7 +18,7 @@ export const CotizacionesScreen = () => {
   const [cargando, setCargando] = useState(true);
   const [paginaActual, setPaginaActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
-  const [actualizandoEstadoId, setActualizandoEstadoId] = useState<number | null>(null);
+  const [actualizandoEstado, setActualizandoEstado] = useState<ActualizacionCotizacion | null>(null);
   // Cotización cuyo rechazo se está confirmando en el modal del motivo
   const [cotizacionARechazar, setCotizacionARechazar] = useState<CotizacionListada | null>(null);
   const [toast, setToast] = useState<{ show: boolean; type: 'success' | 'error'; title?: string; message: string }>({
@@ -50,7 +50,7 @@ export const CotizacionesScreen = () => {
   const handleAceptarCotizacion = async (cotizacionId: number) => {
     const numero = cotizaciones.find((c) => c.cotizacionId === cotizacionId)?.numeroCotizacion ?? '';
 
-    setActualizandoEstadoId(cotizacionId);
+    setActualizandoEstado({ cotizacionId, accion: 'aceptar' });
     try {
       const cotizacion = await actualizarEstadoCotizacion(cotizacionId, 'ACEPTADA');
 
@@ -80,7 +80,7 @@ export const CotizacionesScreen = () => {
     } catch (error) {
       mostrarToastError(error, 'No se pudo aceptar la cotización.');
     } finally {
-      setActualizandoEstadoId(null);
+      setActualizandoEstado(null);
     }
   };
 
@@ -89,7 +89,7 @@ export const CotizacionesScreen = () => {
     if (!cotizacionARechazar) return;
     const { cotizacionId, numeroCotizacion } = cotizacionARechazar;
 
-    setActualizandoEstadoId(cotizacionId);
+    setActualizandoEstado({ cotizacionId, accion: 'rechazar' });
     try {
       const cotizacion = await actualizarEstadoCotizacion(cotizacionId, 'RECHAZADA', motivo);
 
@@ -119,7 +119,7 @@ export const CotizacionesScreen = () => {
       mostrarToastError(error, 'No se pudo rechazar la cotización.');
     } finally {
       setCotizacionARechazar(null);
-      setActualizandoEstadoId(null);
+      setActualizandoEstado(null);
       // Se recarga también si falló: el rechazo pudo haberse guardado antes del error.
       await cargarCotizaciones(paginaActual);
     }
@@ -143,7 +143,7 @@ export const CotizacionesScreen = () => {
           ) : (
             <CotizacionesTable
               cotizaciones={cotizaciones}
-              actualizandoId={actualizandoEstadoId}
+              actualizando={actualizandoEstado}
               onAceptar={handleAceptarCotizacion}
               onRechazar={(id) => setCotizacionARechazar(cotizaciones.find((c) => c.cotizacionId === id) ?? null)}
             />
@@ -160,7 +160,7 @@ export const CotizacionesScreen = () => {
           isOpen={cotizacionARechazar !== null}
           numeroCotizacion={cotizacionARechazar?.numeroCotizacion ?? ''}
           clienteNombre={cotizacionARechazar?.clienteNombre ?? ''}
-          guardando={actualizandoEstadoId !== null}
+          guardando={actualizandoEstado !== null}
           onClose={() => setCotizacionARechazar(null)}
           onConfirmar={handleRechazarCotizacion}
         />

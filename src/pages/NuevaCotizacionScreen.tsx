@@ -761,7 +761,7 @@ export const NuevaCotizacionScreen = () => {
                 <div className="flex justify-end items-center gap-5 pt-2">
                   <button onClick={guardarCotizacion} disabled={guardando}
                     className="px-8 py-2.5 bg-[#22C55E] text-black font-medium rounded-full hover:bg-[#16A34A] transition-all shadow-md text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                    {guardando ? 'Guardando…' : 'Guardar'}
+                    {guardando ? 'Guardando cotización...' : 'Guardar'}
                   </button>
                   <button
                     type="button"

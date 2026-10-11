@@ -14,6 +14,7 @@ import {
 } from "../services/solicitudes"
 import { useSolicitudes } from "../hooks/useSolicitudes"
 import SolicitudesServicioTable from "../components/SolicitudesServicioTable"
+import type { DecisionOferta } from "../components/OfertaFila"
 import AgregarEditarModal from "../components/Modal"
 import { ChevronDown } from "lucide-react"
 import SearchBar from "../components/SearchBar"
@@ -63,6 +64,8 @@ export default function SolicitudesServicioScreen() {
     clienteNombre: string;
     tecnicoNombre: string;
   } | null>(null);
+  const [autorizandoViaje, setAutorizandoViaje] = useState(false);
+  const [decidiendoOferta, setDecidiendoOferta] = useState<DecisionOferta | null>(null);
 
   const cargarClientes = async () => {
     try {
@@ -189,12 +192,15 @@ export default function SolicitudesServicioScreen() {
   const handleAceptarOferta = async (solicitudId: number, ofertaId: number) => {
     const solicitud = solicitudes.find((s) => s.solicitudId === solicitudId);
     const oferta = solicitud?.ofertas.find((o) => o.ofertaId === ofertaId);
-    if (!solicitud || !oferta) return;
+    if (!solicitud || !oferta || decidiendoOferta) return;
 
+    setDecidiendoOferta({ ofertaId, accion: 'aceptar' });
     try {
       await aceptarOferta(solicitudId, ofertaId);
     } catch (e) {
       return mostrarError(e, "No se pudo aceptar la oferta.");
+    } finally {
+      setDecidiendoOferta(null);
     }
 
     setViajePorAutorizar({
@@ -205,13 +211,16 @@ export default function SolicitudesServicioScreen() {
   }
 
   const handleAutorizarViaje = async (autorizacion: AutorizacionViaje) => {
-    if (!viajePorAutorizar) return;
+    if (!viajePorAutorizar || autorizandoViaje) return;
     const { solicitudId, clienteNombre, tecnicoNombre } = viajePorAutorizar;
 
+    setAutorizandoViaje(true);
     try {
       await autorizarViaje(solicitudId, autorizacion);
     } catch (e) {
       return mostrarError(e, "No se pudo autorizar el viaje.");
+    } finally {
+      setAutorizandoViaje(false);
     }
 
     // El backend crea la visita técnica al autorizar el viaje; aquí solo se trae para verla en las demás pantallas.
@@ -230,12 +239,15 @@ export default function SolicitudesServicioScreen() {
   const handleRechazarOferta = async (solicitudId: number, ofertaId: number) => {
     const solicitud = solicitudes.find((s) => s.solicitudId === solicitudId);
     const oferta = solicitud?.ofertas.find((o) => o.ofertaId === ofertaId);
-    if (!solicitud || !oferta) return;
+    if (!solicitud || !oferta || decidiendoOferta) return;
 
+    setDecidiendoOferta({ ofertaId, accion: 'rechazar' });
     try {
       await rechazarOferta(solicitudId, ofertaId);
     } catch (e) {
       return mostrarError(e, "No se pudo rechazar la oferta.");
+    } finally {
+      setDecidiendoOferta(null);
     }
 
     agregarNotificacion({
@@ -412,6 +424,7 @@ export default function SolicitudesServicioScreen() {
         <div className="my-5">
           <SolicitudesServicioTable
             solicitudes={solicitudes}
+            decidiendoOferta={decidiendoOferta}
             onAceptarOferta={handleAceptarOferta}
             onRechazarOferta={handleRechazarOferta}
             onEditar={abrirEdicion}
@@ -425,6 +438,7 @@ export default function SolicitudesServicioScreen() {
           tecnicoNombre={viajePorAutorizar?.tecnicoNombre ?? ''}
           onClose={() => setViajePorAutorizar(null)}
           onAutorizar={handleAutorizarViaje}
+          guardando={autorizandoViaje}
         />
 
         <ConfirmDeleteModal
