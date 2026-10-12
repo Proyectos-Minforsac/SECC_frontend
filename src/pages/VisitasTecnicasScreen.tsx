@@ -12,6 +12,7 @@ import {
   type SeleccionVisita,
 } from "../services/detalleVisita";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import FinalizarEtapaModal from "../components/FinalizarEtapaModal";
 import Toast from "../components/Toast";
 import { agregarNotificacion } from "../services/notificaciones";
 import { garantiaDelServicio } from "../services/mantenimientos";
@@ -24,7 +25,8 @@ import {
 } from "../services/visitasProgramadas";
 import {
   ETAPAS_SERVICIO,
-  etapaActivaIndice,
+  INDICE_INSTALACION,
+  estadoEtapa,
   finalizarEtapaServicio,
   nombreDeTipo,
   type TipoVisita,
@@ -48,6 +50,8 @@ export default function VisitasTecnicasScreen() {
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [finalizandoId, setFinalizandoId] = useState<number | null>(null);
+  // Servicio cuya instalación se está confirmando en el modal.
+  const [visitaFinalizar, setVisitaFinalizar] = useState<VisitaTecnica | null>(null);
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>({
     show: false,
     type: "error",
@@ -75,7 +79,8 @@ export default function VisitasTecnicasScreen() {
     return solicitudes.find((s) => s.solicitudId === servicio?.solicitudId)?.cliente ?? null;
   })();
 
-  const garantiaFin = programacion?.tipo === 'MANTENIMIENTO'
+  // El mantenimiento y el soporte solo se programan dentro de la garantía.
+  const garantiaFin = programacion && programacion.tipo !== 'INSTALACION'
     ? garantiaDelServicio(visitasProgramadas.filter((v) => v.visitaId === programacion.visita.visitaId))?.fin
     : undefined;
 
@@ -121,16 +126,18 @@ export default function VisitasTecnicasScreen() {
     }
   };
 
-  const handleFinalizarEtapa = async (visita: VisitaTecnica) => {
-    const indice = etapaActivaIndice(visita);
-    if (indice === null || finalizandoId !== null) return;
+  // Solo la instalación se finaliza: habilita a la vez el mantenimiento preventivo y el soporte técnico.
+  const etapaFinalizable = ETAPAS_SERVICIO[INDICE_INSTALACION];
+  const etapasHabilitadas = [ETAPAS_SERVICIO[2], ETAPAS_SERVICIO[3]];
 
-    const etapa = ETAPAS_SERVICIO[indice];
-    const siguiente = ETAPAS_SERVICIO[indice + 1];
-    const consecuencia = siguiente
-      ? `Se habilitará "${siguiente}" para el técnico.`
-      : "Ya no quedarán etapas por trabajar.";
-    if (!window.confirm(`¿Finalizar la etapa "${etapa}"? No se podrán agregar más visitas a esta etapa. ${consecuencia}`)) return;
+  const handleFinalizarEtapa = (visita: VisitaTecnica) => {
+    if (estadoEtapa(visita, INDICE_INSTALACION) !== 'activa' || finalizandoId !== null) return;
+    setVisitaFinalizar(visita);
+  };
+
+  const confirmarFinalizarEtapa = async () => {
+    if (!visitaFinalizar || finalizandoId !== null) return;
+    const visita = visitaFinalizar;
 
     setFinalizandoId(visita.visitaId);
     try {
@@ -139,17 +146,16 @@ export default function VisitasTecnicasScreen() {
       return mostrarError(e, "No se pudo finalizar la etapa.");
     } finally {
       setFinalizandoId(null);
+      setVisitaFinalizar(null);
     }
 
-    if (siguiente) {
-      agregarNotificacion({
-        rolDestino: 'tecnico',
-        tecnicoDestino: visita.tecnicoNombre,
-        solicitudId: visita.solicitudId,
-        mensaje: `Se habilitó la etapa "${siguiente}" del servicio de ${visita.clienteNombre}.`,
-      });
-    }
-    setToast({ show: true, type: "success", message: `La etapa "${etapa}" se finalizó.` });
+    agregarNotificacion({
+      rolDestino: 'tecnico',
+      tecnicoDestino: visita.tecnicoNombre,
+      solicitudId: visita.solicitudId,
+      mensaje: `Se habilitaron las etapas ${etapasHabilitadas.map((e) => `"${e}"`).join(' y ')} del servicio de ${visita.clienteNombre}.`,
+    });
+    setToast({ show: true, type: "success", message: `La etapa "${etapaFinalizable}" se finalizó.` });
   };
 
   return (
@@ -191,6 +197,17 @@ export default function VisitasTecnicasScreen() {
           visitaProgramada={programacion?.editando ?? null}
           onClose={() => setProgramacion(null)}
           onGuardar={handleGuardarVisitaProgramada}
+          guardando={guardando}
+        />
+
+        <FinalizarEtapaModal
+          isOpen={visitaFinalizar !== null}
+          clienteNombre={visitaFinalizar?.clienteNombre ?? ''}
+          etapa={etapaFinalizable}
+          etapasHabilitadas={etapasHabilitadas}
+          guardando={finalizandoId !== null}
+          onClose={() => setVisitaFinalizar(null)}
+          onConfirmar={confirmarFinalizarEtapa}
         />
 
         <ConfirmDeleteModal

@@ -2,7 +2,8 @@ import { pedir } from './http';
 
 export type EstadoVisita ='AUTORIZADA' | 'DIAGNÓSTICO COMPLETADO' | 'ACTIVO' | 'CANCELADA';
 
-// Etapas generales de un servicio; se activan de forma secuencial.
+// Etapas generales de un servicio. El diagnóstico y la instalación se activan en secuencia; al finalizar la
+// instalación se habilitan a la vez el mantenimiento preventivo (periódico) y el soporte técnico (por falla).
 export const ETAPAS_SERVICIO = [
   'Diagnóstico inicial',
   'Instalación',
@@ -74,7 +75,8 @@ export interface VisitaTecnica {
   descripcion: string;
   fecha: string;
   estado: EstadoVisita;
-  // Etapas posteriores al diagnóstico que el empleado ya dio por terminadas.
+  // Etapas que el empleado dio por terminadas. Solo la instalación se finaliza, así que 1 o más significa
+  // que ya está finalizada.
   etapasFinalizadas: number;
   diagnostico?: DiagnosticoVisita;
   cierre?: CierreServicio;
@@ -88,25 +90,26 @@ export const ESTILO_ESTADO_VISITA: Record<EstadoVisita, string> = {
   'CANCELADA': 'bg-rose-100 text-rose-700 border-rose-300/60',
 };
 
-// Cantidad de etapas ya completadas: el diagnóstico (al enviarse) y las que el empleado finalizó.
-export const etapasCompletadas = (visita: VisitaTecnica) =>
-  visita.estado === 'AUTORIZADA' ? 0 : 1 + visita.etapasFinalizadas;
+export const INDICE_INSTALACION = 1;
 
-// Índice de la etapa en la que se trabaja ahora mismo, o null si no hay ninguna: tras completar el
-// diagnóstico la Instalación queda bloqueada hasta que el empleado registre la aceptación de la
-// cotización y active el servicio, y al final no quedan etapas por finalizar.
-export const etapaActivaIndice = (visita: VisitaTecnica): number | null => {
-  if (visita.estado === 'AUTORIZADA') return 0;
-  if (visita.estado !== 'ACTIVO') return null;
+export const instalacionFinalizada = (visita: VisitaTecnica) => visita.etapasFinalizadas >= 1;
 
-  const indice = etapasCompletadas(visita);
-  return indice < ETAPAS_SERVICIO.length ? indice : null;
+export type EstadoEtapa = 'completada' | 'activa' | 'bloqueada';
+
+// Estado de la etapa `indice` (posición en ETAPAS_SERVICIO):
+// - Diagnóstico: activa hasta que el técnico envía el diagnóstico.
+// - Instalación: bloqueada hasta que el empleado registre la aceptación de la cotización y active el
+//   servicio; activa hasta que la finalice.
+// - Mantenimiento preventivo y soporte técnico: bloqueados hasta que se finalice la instalación; luego
+//   quedan activos a la vez hasta que se cierre el servicio (no se finalizan por separado).
+export const estadoEtapa = (visita: VisitaTecnica, indice: number): EstadoEtapa => {
+  if (indice === 0) return visita.estado === 'AUTORIZADA' ? 'activa' : 'completada';
+  if (visita.estado !== 'ACTIVO') return 'bloqueada';
+
+  if (indice === INDICE_INSTALACION) return instalacionFinalizada(visita) ? 'completada' : 'activa';
+  if (!instalacionFinalizada(visita)) return 'bloqueada';
+  return visita.cierre ? 'completada' : 'activa';
 }
-
-// Etapas visibles y desbloqueadas para el técnico: las ya completadas y la activa.
-// Las siguientes se muestran bloqueadas hasta que el empleado finalice la anterior.
-export const etapaHabilitada = (visita: VisitaTecnica, indice: number) =>
-  indice < etapasCompletadas(visita) || indice === etapaActivaIndice(visita);
 
 // Las visitas se cargan del backend y se guardan aquí para compartirlas entre las pantallas del empleado
 // y del técnico. La visita la crea el backend al autorizar el viaje; cada operación devuelve la visita

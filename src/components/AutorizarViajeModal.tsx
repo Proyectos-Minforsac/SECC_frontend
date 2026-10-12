@@ -8,6 +8,7 @@ interface AutorizarViajeModalProps {
   tecnicoNombre: string;
   onClose: () => void;
   onAutorizar: (autorizacion: AutorizacionViaje) => void;
+  guardando?: boolean;
 }
 
 export default function AutorizarViajeModal({
@@ -16,6 +17,7 @@ export default function AutorizarViajeModal({
   tecnicoNombre,
   onClose,
   onAutorizar,
+  guardando = false,
 }: AutorizarViajeModalProps) {
   const [descripcion, setDescripcion] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
@@ -33,6 +35,7 @@ export default function AutorizarViajeModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (guardando) return;
     if (!descripcion.trim()) return setError('Ingresa las instrucciones para la visita.');
     if (!fechaInicio || !fechaFin) return setError('Ingresa las fechas tentativas de la visita.');
     if (fechaFin < fechaInicio) return setError('La fecha final no puede ser anterior a la inicial.');
@@ -90,9 +93,10 @@ export default function AutorizarViajeModal({
           </button>
           <button
             type="submit"
-            className="px-5 py-1.5 bg-[#E2E4E9] text-gray-800 text-sm font-medium rounded-full hover:bg-white transition-colors shadow-sm cursor-pointer"
+            disabled={guardando}
+            className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors shadow-sm ${guardando ? 'bg-[#C7CAD1] text-gray-500 cursor-not-allowed' : 'bg-[#E2E4E9] text-gray-800 hover:bg-white cursor-pointer'}`}
           >
-            Autorizar viaje
+            {guardando ? 'Autorizando viaje...' : 'Autorizar viaje'}
           </button>
         </div>
       </form>

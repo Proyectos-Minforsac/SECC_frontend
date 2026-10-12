@@ -8,9 +8,10 @@ interface DiagnosticoModalProps {
   clienteNombre: string;
   onClose: () => void;
   onGuardar: (diagnostico: DiagnosticoVisita) => void;
+  guardando?: boolean;
 }
 
-export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGuardar }: DiagnosticoModalProps) {
+export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGuardar, guardando = false }: DiagnosticoModalProps) {
   const [descripcion, setDescripcion] = useState('');
   const [componente, setComponente] = useState('');
   const [componentes, setComponentes] = useState<string[]>([]);
@@ -62,6 +63,7 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (guardando) return;
     if (!descripcion.trim()) return setError('Ingresa la descripción del diagnóstico.');
 
     // Si dejó un componente escrito sin añadirlo, se incluye
@@ -176,9 +178,10 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
           </button>
           <button
             type="submit"
-            className="px-5 py-1.5 bg-[#E2E4E9] text-gray-800 text-sm font-medium rounded-full hover:bg-white transition-colors shadow-sm cursor-pointer"
+            disabled={guardando}
+            className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors shadow-sm ${guardando ? 'bg-[#C7CAD1] text-gray-500 cursor-not-allowed' : 'bg-[#E2E4E9] text-gray-800 hover:bg-white cursor-pointer'}`}
           >
-            Guardar
+            {guardando ? 'Guardando diagnóstico...' : 'Guardar'}
           </button>
         </div>
       </form>

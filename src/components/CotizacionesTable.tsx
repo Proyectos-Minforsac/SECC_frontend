@@ -1,15 +1,21 @@
 import { ESTILO_ESTADO_COTIZACION, type CotizacionListada } from '../services/cotizaciones';
 
+// Cambio de estado que se está enviando al servidor.
+export interface ActualizacionCotizacion {
+  cotizacionId: number;
+  accion: 'aceptar' | 'rechazar';
+}
+
 interface CotizacionesTableProps {
   cotizaciones: CotizacionListada[];
-  actualizandoId: number | null;
+  actualizando: ActualizacionCotizacion | null;
   onAceptar: (cotizacionId: number) => void;
   onRechazar: (cotizacionId: number) => void;
 }
 
 export default function CotizacionesTable({
   cotizaciones,
-  actualizandoId,
+  actualizando,
   onAceptar,
   onRechazar,
 }: CotizacionesTableProps) {
@@ -50,18 +56,22 @@ export default function CotizacionesTable({
                   {cotizacion.estado === 'PENDIENTE' ? (
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        disabled={actualizandoId === cotizacion.cotizacionId}
+                        disabled={actualizando?.cotizacionId === cotizacion.cotizacionId}
                         onClick={() => onAceptar(cotizacion.cotizacionId)}
-                        className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full hover:bg-emerald-200 transition-colors disabled:opacity-50 cursor-pointer"
+                        className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full hover:bg-emerald-200 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                       >
-                        Aceptar
+                        {actualizando?.cotizacionId === cotizacion.cotizacionId && actualizando.accion === 'aceptar'
+                          ? 'Aceptando cotización...'
+                          : 'Aceptar'}
                       </button>
                       <button
-                        disabled={actualizandoId === cotizacion.cotizacionId}
+                        disabled={actualizando?.cotizacionId === cotizacion.cotizacionId}
                         onClick={() => onRechazar(cotizacion.cotizacionId)}
-                        className="px-3 py-1 bg-rose-100 text-rose-700 text-xs font-medium rounded-full hover:bg-rose-200 transition-colors disabled:opacity-50 cursor-pointer"
+                        className="px-3 py-1 bg-rose-100 text-rose-700 text-xs font-medium rounded-full hover:bg-rose-200 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                       >
-                        Rechazar
+                        {actualizando?.cotizacionId === cotizacion.cotizacionId && actualizando.accion === 'rechazar'
+                          ? 'Rechazando cotización...'
+                          : 'Rechazar'}
                       </button>
                     </div>
                   ) : (

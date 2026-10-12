@@ -18,9 +18,7 @@ import {
 import {
   ESTILO_ESTADO_VISITA,
   ETAPAS_SERVICIO,
-  etapasCompletadas,
-  etapaActivaIndice,
-  etapaHabilitada,
+  estadoEtapa,
   formatearFechaHora,
   guardarDiagnostico,
   tipoDeEtapa,
@@ -102,8 +100,6 @@ export default function VisitasTecnicoScreen() {
           {visitas.length > 0 ? (
             visitas.map((visita) => {
               const expandida = expandidaId === visita.visitaId;
-              const completadas = etapasCompletadas(visita);
-              const activaIndice = etapaActivaIndice(visita);
               const esperandoCotizacion = visita.estado === 'DIAGNÓSTICO COMPLETADO';
 
               return (
@@ -140,14 +136,16 @@ export default function VisitasTecnicoScreen() {
                         </li>
                       )}
                       {ETAPAS_SERVICIO.map((etapa, indice) => {
-                        const completada = indice < completadas;
-                        const activa = indice === activaIndice;
+                        const estado = estadoEtapa(visita, indice);
+                        const completada = estado === "completada";
+                        const activa = estado === "activa";
                         const esDiagnostico = indice === 0;
                         const esInstalacion = indice === 1;
                         const tipo = tipoDeEtapa(indice);
                         // Habilitada = completada o activa; las demás se ven bloqueadas hasta que el empleado
-                        // finalice la anterior. Solo la etapa activa admite ingreso de datos.
-                        const habilitada = etapaHabilitada(visita, indice);
+                        // finalice la etapa que las habilita. Solo las etapas activas admiten ingreso de datos
+                        // (el mantenimiento y el soporte se activan a la vez al finalizar la instalación).
+                        const habilitada = estado !== "bloqueada";
                         const visitasEtapa = tipo ? visitasDeEtapa(visitasProgramadas, visita.visitaId, tipo) : [];
                         const visitaActual = activa ? visitaProgramadaActual(visitasEtapa) : null;
 
@@ -172,7 +170,9 @@ export default function VisitasTecnicoScreen() {
                                         ? "Servicio cancelado"
                                         : esInstalacion && esperandoCotizacion
                                           ? "Esperando aceptación de la cotización"
-                                          : "Bloqueada hasta finalizar la etapa anterior"}
+                                          : indice >= 2
+                                            ? "Bloqueada hasta finalizar la instalación"
+                                            : "Bloqueada hasta finalizar la etapa anterior"}
                                 </span>
                               </div>
 
@@ -276,6 +276,7 @@ export default function VisitasTecnicoScreen() {
           clienteNombre={visitaDiagnostico?.clienteNombre ?? ""}
           onClose={() => setDiagnosticoVisitaId(null)}
           onGuardar={handleGuardarDiagnostico}
+          guardando={guardando}
         />
 
         <AvanceVisitaModal
@@ -288,6 +289,7 @@ export default function VisitasTecnicoScreen() {
           }
           onClose={() => setAvanceVisitaId(null)}
           onGuardar={handleGuardarAvance}
+          guardando={guardando}
         />
 
         <Toast
