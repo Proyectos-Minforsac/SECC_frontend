@@ -4,21 +4,23 @@ import {
   ESTILO_ESTADO,
   type SolicitudServicio,
 } from '../services/solicitudes';
-import OfertaFila from './OfertaFila';
+import OfertaFila, { type DecisionOferta } from './OfertaFila';
 import OfertasModal from './OfertasModal';
 
 const MAX_OFERTAS_VISIBLES = 2;
 
 interface SolicitudesServicioTableProps {
   solicitudes: SolicitudServicio[];
-  onAceptarOferta: (solicitudId: number, ofertaId: number) => void;
-  onRechazarOferta: (solicitudId: number, ofertaId: number) => void;
+  decidiendoOferta: DecisionOferta | null;
+  onAceptarOferta: (solicitudId: number, ofertaId: number) => void | Promise<void>;
+  onRechazarOferta: (solicitudId: number, ofertaId: number) => void | Promise<void>;
   onEditar: (solicitud: SolicitudServicio) => void;
   onEliminar: (solicitud: SolicitudServicio) => void;
 }
 
 export default function SolicitudesServicioTable({
   solicitudes,
+  decidiendoOferta,
   onAceptarOferta,
   onRechazarOferta,
   onEditar,
@@ -62,6 +64,7 @@ export default function SolicitudesServicioTable({
                           key={oferta.ofertaId}
                           oferta={oferta}
                           puedeDecidir={admiteDecisionDeOfertas(solicitud.estado)}
+                          decidiendo={decidiendoOferta}
                           onAceptar={() => onAceptarOferta(solicitud.solicitudId, oferta.ofertaId)}
                           onRechazar={() => onRechazarOferta(solicitud.solicitudId, oferta.ofertaId)}
                         />
@@ -119,9 +122,11 @@ export default function SolicitudesServicioTable({
         solicitud={solicitudModal}
         isOpen={solicitudModal !== null}
         onClose={() => setSolicitudModalId(null)}
-        onAceptar={(ofertaId) => {
+        decidiendo={decidiendoOferta}
+        onAceptar={async (ofertaId) => {
           if (!solicitudModal) return;
-          onAceptarOferta(solicitudModal.solicitudId, ofertaId);
+          // Se espera a que termine para que el botón muestre "Aceptando oferta..." antes de cerrar.
+          await onAceptarOferta(solicitudModal.solicitudId, ofertaId);
           setSolicitudModalId(null);
         }}
         onRechazar={(ofertaId) => solicitudModal && onRechazarOferta(solicitudModal.solicitudId, ofertaId)}

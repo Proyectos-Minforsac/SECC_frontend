@@ -1,16 +1,17 @@
 import AgregarEditarModal from './Modal';
-import OfertaFila from './OfertaFila';
+import OfertaFila, { type DecisionOferta } from './OfertaFila';
 import { admiteDecisionDeOfertas, type SolicitudServicio } from '../services/solicitudes';
 
 interface OfertasModalProps {
   solicitud: SolicitudServicio | null;
   isOpen: boolean;
   onClose: () => void;
+  decidiendo?: DecisionOferta | null;
   onAceptar: (ofertaId: number) => void;
   onRechazar: (ofertaId: number) => void;
 }
 
-export default function OfertasModal({ solicitud, isOpen, onClose, onAceptar, onRechazar }: OfertasModalProps) {
+export default function OfertasModal({ solicitud, isOpen, onClose, decidiendo = null, onAceptar, onRechazar }: OfertasModalProps) {
   return (
     <AgregarEditarModal
       isOpen={isOpen}
@@ -24,6 +25,7 @@ export default function OfertasModal({ solicitud, isOpen, onClose, onAceptar, on
               key={oferta.ofertaId}
               oferta={oferta}
               puedeDecidir={admiteDecisionDeOfertas(solicitud.estado)}
+              decidiendo={decidiendo}
               onAceptar={() => onAceptar(oferta.ofertaId)}
               onRechazar={() => onRechazar(oferta.ofertaId)}
             />

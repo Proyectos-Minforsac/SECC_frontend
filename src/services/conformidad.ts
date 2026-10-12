@@ -33,7 +33,8 @@ const SI_NO = ['Sí', 'Parcialmente', 'No'];
 // Las preguntas se redactan según el tipo de cliente (empresa o persona natural)
 // y la etapa del servicio a la que pertenece la visita.
 export const construirPreguntas = (detalle: DetalleVisita, cliente: Cliente): PreguntaConformidad[] => {
-  const esEmpresa = cliente.tipoPersona.toLowerCase().startsWith('jur');
+  // En Perú el RUC de una empresa (persona jurídica) empieza con 20; el de una persona natural, con 10.
+  const esEmpresa = cliente.ruc.trim().startsWith('20');
   const sujeto = esEmpresa ? cliente.nombre : 'usted';
   const personal = esEmpresa ? 'su personal' : 'usted';
 

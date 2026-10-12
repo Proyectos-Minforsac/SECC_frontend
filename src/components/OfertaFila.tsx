@@ -1,13 +1,24 @@
 import { ESTILO_ESTADO_OFERTA, formatearMonto, type OfertaVisita } from '../services/solicitudes';
 
+// Decisión sobre una oferta que se está enviando al servidor.
+export interface DecisionOferta {
+  ofertaId: number;
+  accion: 'aceptar' | 'rechazar';
+}
+
 interface OfertaFilaProps {
   oferta: OfertaVisita;
   puedeDecidir: boolean;
+  // Decisión en curso (de esta u otra oferta): mientras exista, ningún botón responde.
+  decidiendo?: DecisionOferta | null;
   onAceptar: () => void;
   onRechazar: () => void;
 }
 
-export default function OfertaFila({ oferta, puedeDecidir, onAceptar, onRechazar }: OfertaFilaProps) {
+export default function OfertaFila({ oferta, puedeDecidir, decidiendo = null, onAceptar, onRechazar }: OfertaFilaProps) {
+  const aceptando = decidiendo?.ofertaId === oferta.ofertaId && decidiendo.accion === 'aceptar';
+  const rechazando = decidiendo?.ofertaId === oferta.ofertaId && decidiendo.accion === 'rechazar';
+
   return (
     <div className="flex items-center justify-between gap-3 bg-white rounded-xl border border-slate-100 shadow-sm px-3.5 py-2.5">
       <div className="min-w-0">
@@ -36,16 +47,18 @@ export default function OfertaFila({ oferta, puedeDecidir, onAceptar, onRechazar
       {oferta.estado === 'PENDIENTE' && puedeDecidir ? (
         <div className="flex items-center gap-2 shrink-0">
           <button
+            disabled={decidiendo !== null}
             onClick={onAceptar}
-            className="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-full hover:bg-emerald-700 transition-colors cursor-pointer"
+            className="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-full hover:bg-emerald-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Aceptar
+            {aceptando ? 'Aceptando oferta...' : 'Aceptar'}
           </button>
           <button
+            disabled={decidiendo !== null}
             onClick={onRechazar}
-            className="px-3 py-1 bg-rose-600 text-white text-xs font-medium rounded-full hover:bg-rose-700 transition-colors cursor-pointer"
+            className="px-3 py-1 bg-rose-600 text-white text-xs font-medium rounded-full hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Rechazar
+            {rechazando ? 'Rechazando oferta...' : 'Rechazar'}
           </button>
         </div>
       ) : (
