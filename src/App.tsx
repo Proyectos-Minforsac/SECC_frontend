@@ -1,5 +1,7 @@
 import './App.css'
 import CotizacionPdfScreen from './pages/CotizacionPDFScreen';
+import CotizacionPDFPruebaScreen from './pages/CotizacionPDFPruebaScreen';
+import ConformidadPDFPruebaScreen from './pages/ConformidadPDFPruebaScreen';
 import ClientesScreen from './pages/ClientesScreen'
 import CotizacionesScreen from './pages/CotizacionesScreen'
 import LoginScreen from './pages/InicioSesionScreen'
@@ -8,7 +10,6 @@ import TecnicosScreen from './pages/TecnicosScreen';
 import ServiciosScreen from './pages/ServiciosScreen';
 import VisitasTecnicasScreen from './pages/VisitasTecnicasScreen';
 import NuevaCotizacionScreen from './pages/NuevaCotizacionScreen';
-import MantenimientosScreen from './pages/MantenimientosScreen';
 import NotificacionesScreen from './pages/NotificacionesScreen';
 import SolicitudesServicioScreen from './pages/SolicitudesServicioScreen';
 import SolicitudesTecnicoScreen from './pages/SolicitudesTecnicoScreen';
@@ -34,8 +35,9 @@ function App() {
             <Route path="/cotizaciones" element={<CotizacionesScreen />} />
             <Route path="/cotizaciones/nueva" element={<NuevaCotizacionScreen />} />
             <Route path="/cotizacion-pdf" element={<CotizacionPdfScreen/>}/>
+            <Route path="/cotizacion-pdf/prueba" element={<CotizacionPDFPruebaScreen />} />
+            <Route path="/conformidad-pdf/prueba" element={<ConformidadPDFPruebaScreen />} />
             <Route path="/visitas-tecnicas" element={<VisitasTecnicasScreen />}/>
-            <Route path="/mantenimientos" element={<MantenimientosScreen />} />
           </Route>
         </Route>
 
