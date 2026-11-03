@@ -1,8 +1,10 @@
 import type { VisitaProgramada } from './visitasProgramadas';
 
-// Vigencia de la garantía que ofrece la empresa, contada desde la última visita de
-// instalación completada del servicio.
-export const GARANTIA_MESES = 12;
+// La garantía del servicio la acuerda la cotización y dura de 4 a 6 meses, contados desde la última visita de
+// instalación completada. Los servicios sin garantía guardada (anteriores a este campo) usan el valor por defecto.
+// Los mismos límites están en el backend (services/garantia.js).
+export const GARANTIA_MESES_OPCIONES = [4, 5, 6] as const;
+export const GARANTIA_MESES_DEFECTO = 6;
 
 // Una visita de mantenimiento se considera "cercana" cuando faltan hoy o hasta estos días.
 export const DIAS_AVISO = 1;
@@ -29,13 +31,16 @@ export const diasEntre = (desde: string, hasta: string) => {
 
 // La garantía arranca con la última visita de instalación completada. Sin ninguna
 // completada, el servicio aún no está instalado y no tiene garantía.
-export const garantiaDelServicio = (visitasDelServicio: VisitaProgramada[]): Garantia | null => {
+export const garantiaDelServicio = (
+  visitasDelServicio: VisitaProgramada[],
+  garantiaMeses: number
+): Garantia | null => {
   const completadas = visitasDelServicio.filter((v) => v.tipo === 'INSTALACION' && v.avance).map((v) => v.fecha);
   if (completadas.length === 0) return null;
 
   const inicio = completadas.reduce((a, b) => (a > b ? a : b));
   const [anio, mes, dia] = partesISO(inicio);
-  return { inicio, fin: aISO(new Date(anio, mes - 1 + GARANTIA_MESES, dia)) };
+  return { inicio, fin: aISO(new Date(anio, mes - 1 + garantiaMeses, dia)) };
 }
 
 export const garantiaVigente = (garantia: Garantia) => hoyISO() <= garantia.fin;

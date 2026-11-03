@@ -1,17 +1,39 @@
-import { useEffect, useRef, useState } from 'react';
-import { Plus, Check, ChevronDown, List, Wallet, ArrowLeft } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Plus, Check, ChevronDown, List, ArrowLeft } from 'lucide-react';
 import CardItem from '../components/CotizacionItem';
+import HojaCostos from '../components/HojaCostos';
+import ResumenCostos from '../components/ResumenCostos';
+import PanelAnaloga from '../components/PanelAnaloga';
+import LoadingSpinner from '../components/LoadingSpinner';
 import Toast from '../components/Toast';
 import { obtenerClientes, type Cliente } from '../services/clientes';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
   crearCotizacion,
-  CATEGORIAS_COSTO,
+  corregirCotizacion,
+  obtenerCotizacionParaEdicion,
   type CotizacionItem,
+  type CotizacionParaEdicion,
   type DetalleImpresora,
-  type CrearCotizacionPayload,
-  type CategoriaCosto,
+  type CorregirCotizacionPayload,
 } from '../services/cotizaciones';
+import { GARANTIA_MESES_DEFECTO, GARANTIA_MESES_OPCIONES } from '../services/mantenimientos';
+import { margenBajoMinimo } from '../services/estimaciones';
+import { obtenerAnaloga, type Analoga, type EntradasEstimacion } from '../services/analoga';
+import { formatearFechaHora } from '../services/visitas';
+import { useAuth } from '../context/AuthContext';
+import {
+  COSTO_OBLIGATORIO,
+  TIPOS_CON_COSTO,
+  actividadesVacias,
+  aPayloadEstimacion,
+  calcularEstimacion,
+  type Actividades,
+  type Valor,
+} from '../services/calculoCostos';
+import { DESTINO_GENERAL } from '../services/tarifario';
+import { useDatosDeCosto } from '../hooks/useDatosDeCosto';
+import { useSolicitudes } from '../hooks/useSolicitudes';
 
 // Datos que puede traer la navegación al llegar desde otra pantalla
 // (p.ej. una notificación de diagnóstico inicial completado).
@@ -20,70 +42,8 @@ interface NuevaCotizacionState {
   solicitudId?: number;
 }
 
-type FilaCosto = { descripcion: string; cantidad: number | ''; costoUnitario: number | '' };
-
-const costosVacios = (): Record<CategoriaCosto, FilaCosto> =>
-  CATEGORIAS_COSTO.reduce((acc, categoria) => {
-    acc[categoria] = { descripcion: '', cantidad: '', costoUnitario: '' };
-    return acc;
-  }, {} as Record<CategoriaCosto, FilaCosto>);
-
-// Panel de uso interno: gastos logísticos (materiales, viáticos, horas-hombre) que
-// forman el costo real del servicio. No se imprime en el PDF que recibe el cliente.
-const InductoresCosto = ({
-  costos,
-  onChange,
-}: {
-  costos: Record<CategoriaCosto, FilaCosto>;
-  onChange: (categoria: CategoriaCosto, campo: keyof FilaCosto, valor: string) => void;
-}) => {
-  const costoInternoTotal = CATEGORIAS_COSTO.reduce(
-    (acc, categoria) => acc + (Number(costos[categoria].cantidad) || 0) * (Number(costos[categoria].costoUnitario) || 0),
-    0
-  );
-
-  return (
-    <div className="bg-[#1C204E] rounded-2xl p-4 space-y-3 border border-[#343C8F]">
-      {CATEGORIAS_COSTO.map((categoria) => {
-        const fila = costos[categoria];
-        const subtotal = (Number(fila.cantidad) || 0) * (Number(fila.costoUnitario) || 0);
-
-        return (
-          <div key={categoria} className="grid grid-cols-12 gap-2 items-center">
-            <span className="col-span-3 text-sm text-white truncate">{categoria}</span>
-            <input
-              type="text"
-              placeholder="Detalle (opcional)"
-              value={fila.descripcion}
-              onChange={(e) => onChange(categoria, 'descripcion', e.target.value)}
-              className="col-span-4 h-9 bg-white rounded-full px-3 text-black placeholder-gray-500 text-sm outline-none shadow-sm"
-            />
-            <input
-              type="number"
-              placeholder="Cant."
-              value={fila.cantidad}
-              onChange={(e) => onChange(categoria, 'cantidad', e.target.value)}
-              className="col-span-2 h-9 bg-white rounded-full px-3 text-black text-center text-sm outline-none shadow-sm"
-            />
-            <input
-              type="number"
-              placeholder="Costo unit."
-              value={fila.costoUnitario}
-              onChange={(e) => onChange(categoria, 'costoUnitario', e.target.value)}
-              className="col-span-2 h-9 bg-white rounded-full px-3 text-black text-center text-sm outline-none shadow-sm"
-            />
-            <span className="col-span-1 text-xs text-white text-right">{subtotal.toFixed(2)}</span>
-          </div>
-        );
-      })}
-
-      <div className="flex items-center justify-between pt-2 border-t border-[#343C8F]">
-        <span className="text-sm text-slate-300">Costo interno total (uso interno, no aparece en el PDF)</span>
-        <span className="text-sm font-bold text-white">{costoInternoTotal.toFixed(2)}</span>
-      </div>
-    </div>
-  );
-};
+// Justificación mínima que exige el servidor cuando el jefe acepta un margen bajo el mínimo.
+const JUSTIFICACION_MINIMA = 10;
 
 const detalleImpresoraVacio: DetalleImpresora = {
   fecha: '',
@@ -112,7 +72,7 @@ const DetalleItemImpresora = ({
               type="date"
               value={value.fecha}
               onChange={(e) => onChange('fecha', e.target.value)}
-              className="w-full h-10 bg-white rounded-full px-4 text-black text-xs outline-none shadow-sm"
+              className="w-full h-10 bg-white rounded-full px-4 text-black text-sm outline-none shadow-sm"
             />
           </div>
           <div>
@@ -143,7 +103,7 @@ const DetalleItemImpresora = ({
               placeholder="Escriba la marca"
               value={value.marca}
               onChange={(e) => onChange('marca', e.target.value)}
-              className="w-full h-10 bg-white rounded-full px-4 text-black text-xs outline-none shadow-sm"
+              className="w-full h-10 bg-white rounded-full px-4 text-black text-sm outline-none shadow-sm"
             />
           </div>
 
@@ -154,7 +114,7 @@ const DetalleItemImpresora = ({
               placeholder="Escriba el modelo"
               value={value.modelo}
               onChange={(e) => onChange('modelo', e.target.value)}
-              className="w-full h-10 bg-white rounded-full px-4 text-black text-xs outline-none shadow-sm"
+              className="w-full h-10 bg-white rounded-full px-4 text-black text-sm outline-none shadow-sm"
             />
           </div>
 
@@ -165,7 +125,7 @@ const DetalleItemImpresora = ({
               placeholder="Escriba el número de serie"
               value={value.numeroSerie}
               onChange={(e) => onChange('numeroSerie', e.target.value)}
-              className="w-full h-10 bg-white rounded-full px-4 text-black text-xs outline-none shadow-sm"
+              className="w-full h-10 bg-white rounded-full px-4 text-black text-sm outline-none shadow-sm"
             />
           </div>
 
@@ -176,7 +136,7 @@ const DetalleItemImpresora = ({
               placeholder="Escriba el caso HD"
               value={value.casoHD}
               onChange={(e) => onChange('casoHD', e.target.value)}
-              className="w-full h-10 bg-white rounded-full px-4 text-black text-xs outline-none shadow-sm"
+              className="w-full h-10 bg-white rounded-full px-4 text-black text-sm outline-none shadow-sm"
             />
           </div>
         </div>
@@ -185,12 +145,26 @@ const DetalleItemImpresora = ({
   )
 }
 
+// Esta pantalla sirve para dos cosas: crear una cotización nueva y corregir una que el jefe devolvió
+// (ruta /cotizaciones/:cotizacionId/editar). Al corregir, el cliente y la solicitud no cambian.
 export const NuevaCotizacionScreen = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { usuario } = useAuth();
+  const esJefe = usuario?.rol === 'jefe';
+  const { cotizacionId: cotizacionIdRuta } = useParams();
+  const cotizacionId = cotizacionIdRuta ? Number(cotizacionIdRuta) : null;
+  const modoEdicion = cotizacionId !== null;
   const clientePrefill = (location.state as NuevaCotizacionState | null)?.clientePrefill;
-  const solicitudId = (location.state as NuevaCotizacionState | null)?.solicitudId;
+
+  // La cotización devuelta que se está corrigiendo, ya cargada del servidor
+  const [edicion, setEdicion] = useState<CotizacionParaEdicion | null>(null);
+  const [cargandoEdicion, setCargandoEdicion] = useState(modoEdicion);
+  const [errorEdicion, setErrorEdicion] = useState('');
+  const solicitudId = modoEdicion
+    ? edicion?.solicitudId ?? undefined
+    : (location.state as NuevaCotizacionState | null)?.solicitudId;
 
   // Estados globales para los datos del cliente
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(clientePrefill ?? null);
@@ -203,6 +177,21 @@ export const NuevaCotizacionScreen = () => {
   const [clienteRuc, setClienteRuc] = useState(clientePrefill?.ruc ?? '');
   const [solicitanteNombre, setSolicitanteNombre] = useState('');
   const [divisa, setDivisa] = useState('SOLES');
+  // Garantía del servicio (mantenimiento y soporte): el servicio la hereda cuando se acepta la cotización.
+  // Mientras el trabajador no elija una, se propone la garantía por defecto que fijó el jefe.
+  const [garantiaElegida, setGarantiaElegida] = useState<number | null>(null);
+
+  // Tarifas y parámetros del jefe, con los que se calcula la estimación de costos.
+  const { cargando: cargandoCostos, tarifario, parametros, errorTarifario, errorParametros } = useDatosDeCosto();
+  const garantiaMeses = garantiaElegida ?? parametros?.valores.GARANTIA_MESES_DEFECTO?.valor ?? GARANTIA_MESES_DEFECTO;
+  const tasaImprevistos = parametros?.valores.TASA_IMPREVISTOS?.valor ?? null;
+  const margenMinimo = parametros?.valores.MARGEN_MINIMO?.valor ?? null;
+
+  // El diagnóstico ya se pagó: su costo es el monto de la oferta que se aceptó para esta solicitud.
+  const solicitudes = useSolicitudes();
+  const costoDiagnostico = solicitudId
+    ? solicitudes.find((s) => s.solicitudId === solicitudId)?.ofertas.find((o) => o.estado === 'ACEPTADA')?.montoVisita ?? 0
+    : 0;
 
   // Estados del formulario para agregar un ítem
   const [tipo, setTipo] = useState('');
@@ -210,6 +199,8 @@ export const NuevaCotizacionScreen = () => {
   const [descripcion, setDescripcion] = useState('');
   const [cantidad, setCantidad] = useState<number | ''>('');
   const [precio, setPrecio] = useState<number | ''>('');
+  // Costo de compra por unidad (uso interno): solo para productos, impresoras y alquileres
+  const [costoCompra, setCostoCompra] = useState<number | ''>('');
 
   // Detalles específicos cuando el ítem es de tipo "Impresora"
   const [detalleImpresora, setDetalleImpresora] = useState<DetalleImpresora>(detalleImpresoraVacio);
@@ -232,19 +223,93 @@ export const NuevaCotizacionScreen = () => {
   // Id del ítem que se está editando (null = el formulario agrega un ítem nuevo)
   const [itemEditandoId, setItemEditandoId] = useState<number | null>(null);
 
-  // Inductores de costo (uso interno): materiales, viáticos y horas-hombre del servicio
-  const [isCostosOpen, setIsCostosOpen] = useState(false);
-  const [costos, setCostos] = useState<Record<CategoriaCosto, FilaCosto>>(costosVacios());
+  // Estimación de costos (uso interno, obligatoria): lo que ingresa el trabajador. El resultado se calcula más abajo.
+  const [destino, setDestino] = useState(DESTINO_GENERAL);
+  const [tipoCambio, setTipoCambio] = useState<Valor>('');
+  const [actividades, setActividades] = useState<Actividades>(actividadesVacias());
 
-  const actualizarCosto = (categoria: CategoriaCosto, campo: keyof FilaCosto, valor: string) => {
-    setCostos((prev) => ({
-      ...prev,
-      [categoria]: {
-        ...prev[categoria],
-        [campo]: campo === 'descripcion' ? valor : (valor ? Number(valor) : ''),
-      },
-    }));
+  // Si el jefe crea o corrige la cotización, queda validada al guardar: con el margen bajo el mínimo debe explicar por qué.
+  const [justificacion, setJustificacion] = useState('');
+
+  // Servicios cerrados parecidos a este (mismo tipo de servicio y destino): se buscan al cambiar cualquiera de los dos
+  const tipoServicio = solicitudId ? solicitudes.find((s) => s.solicitudId === solicitudId)?.tipoServicio ?? '' : '';
+  const [analoga, setAnaloga] = useState<Analoga | null>(null);
+  const [errorAnaloga, setErrorAnaloga] = useState('');
+
+  useEffect(() => {
+    let vigente = true;
+    setErrorAnaloga('');
+
+    obtenerAnaloga(tipoServicio, destino)
+      .then((recibida) => vigente && setAnaloga(recibida))
+      .catch((error) => {
+        if (!vigente) return;
+        setAnaloga(null);
+        setErrorAnaloga(error instanceof Error ? error.message : 'No se pudieron cargar los servicios similares.');
+      });
+
+    return () => {
+      vigente = false;
+    };
+  }, [tipoServicio, destino]);
+
+  // Copia los parámetros de un servicio parecido a la hoja de costos (los ítems y los precios no se tocan)
+  const copiarParametros = (entradas: EntradasEstimacion) => {
+    if (tarifario?.destinos.includes(entradas.destino)) setDestino(entradas.destino);
+    setActividades(entradas.actividades);
   };
+
+  // Al corregir, el formulario arranca con lo que tenía la cotización devuelta
+  useEffect(() => {
+    if (cotizacionId === null) return;
+
+    let vigente = true;
+    setCargandoEdicion(true);
+    setErrorEdicion('');
+
+    obtenerCotizacionParaEdicion(cotizacionId)
+      .then((c) => {
+        if (!vigente) return;
+
+        setEdicion(c);
+        if (c.cliente) {
+          setClienteSeleccionado(c.cliente);
+          setClienteNombre(c.cliente.nombre);
+          setClienteDireccion(c.cliente.direccion);
+          setClienteRuc(c.cliente.ruc);
+        }
+        setSolicitanteNombre(c.solicitante);
+        setDivisa(c.moneda);
+        setGarantiaElegida(c.garantiaMeses);
+        setItems(
+          c.items.map((item, indice) => ({
+            id: Date.now() + indice,
+            nombre: item.nombre,
+            descripcion: item.descripcion,
+            tipo: item.tipo,
+            cantidad: item.cantidad,
+            precio: item.precioUnitario,
+            total: item.tipo === 'Título' ? 0 : item.cantidad * item.precioUnitario,
+            ...(item.costoUnitario !== null ? { costoUnitario: item.costoUnitario } : {}),
+            ...(item.detalleImpresora ? { detalleImpresora: item.detalleImpresora } : {}),
+          }))
+        );
+
+        const entradas = c.estimacion.entradas;
+        if (entradas) {
+          setDestino(entradas.destino);
+          // En soles el tipo de cambio es 1 y no se pide
+          setTipoCambio(c.moneda === 'DÓLARES' ? entradas.tipoCambio : '');
+          setActividades(entradas.actividades);
+        }
+      })
+      .catch((error) => vigente && setErrorEdicion(error instanceof Error ? error.message : 'No se pudo cargar la cotización.'))
+      .finally(() => vigente && setCargandoEdicion(false));
+
+    return () => {
+      vigente = false;
+    };
+  }, [cotizacionId]);
 
   useEffect(() => {
     const cargarSugerencias = async () => {
@@ -310,6 +375,13 @@ export const NuevaCotizacionScreen = () => {
       return;
     }
 
+    // Los productos, impresoras y alquileres llevan costo de compra; los servicios no (su costo es la mano de obra).
+    const itemLlevaCosto = !esTitulo && TIPOS_CON_COSTO.includes(tipo);
+    if (itemLlevaCosto && COSTO_OBLIGATORIO.includes(tipo) && costoCompra === '') {
+      mostrarToastError("Ingrese el costo de compra del ítem.");
+      return;
+    }
+
     const newItem: CotizacionItem = {
       id: itemEditandoId ?? Date.now(),
       nombre: nombreItem,
@@ -318,6 +390,7 @@ export const NuevaCotizacionScreen = () => {
       cantidad: Number(cantidad),
       precio: Number(precio),
       total: esTitulo ? 0 : totalItemActual,
+      ...(itemLlevaCosto && costoCompra !== '' ? { costoUnitario: Number(costoCompra) } : {}),
       ...(tipo === 'Impresora' ? { detalleImpresora } : {}),
     };
 
@@ -338,6 +411,7 @@ export const NuevaCotizacionScreen = () => {
     setDescripcion('');
     setCantidad('');
     setPrecio('');
+    setCostoCompra('');
     setDetalleImpresora(detalleImpresoraVacio);
     setIsDetailsOpen(false);
   };
@@ -354,6 +428,7 @@ export const NuevaCotizacionScreen = () => {
     setTipo(item.tipo === 'Título' ? '' : item.tipo);
     setCantidad(item.cantidad);
     setPrecio(item.precio);
+    setCostoCompra(item.costoUnitario ?? '');
     setDetalleImpresora(item.detalleImpresora ?? detalleImpresoraVacio);
     setIsDetailsOpen(item.tipo === 'Impresora');
   };
@@ -363,6 +438,23 @@ export const NuevaCotizacionScreen = () => {
   const subtotal = totalGeneral;
   const igv = subtotal * 0.18;
   const totalConIGV = subtotal + igv;
+
+  // Estimación de costos con las tarifas del jefe. La venta es el subtotal, sin IGV; el servidor la recalcula al guardar.
+  const { resultado, problemas } = useMemo(
+    () =>
+      calcularEstimacion({
+        actividades,
+        tarifas: tarifario?.vigentes[destino],
+        destino,
+        items,
+        costoDiagnostico,
+        tasaImprevistos,
+        ventaSinIGV: subtotal,
+        moneda: divisa,
+        tipoCambio,
+      }),
+    [actividades, tarifario, destino, items, costoDiagnostico, tasaImprevistos, subtotal, divisa, tipoCambio]
+  );
 
   // Eliminar un item de la lista
   const handleDeleteItem = (id: number) => {
@@ -375,9 +467,13 @@ export const NuevaCotizacionScreen = () => {
     navigate('/cotizaciones');
   };
 
-  // Guarda la cotización en el backend y luego navega al documento PDF
+  // El jefe valida al guardar: si el margen queda bajo el mínimo (o no se puede calcular), tiene que explicar por qué.
+  const exigeJustificacion = esJefe && margenBajoMinimo(resultado.margen, margenMinimo);
+
+  // Guarda la cotización en el backend. Si queda validada (la guardó el jefe) abre su PDF; si no, vuelve a la lista:
+  // la estimación espera la decisión del jefe antes de poder enviarse al cliente.
   const guardarCotizacion = async () => {
-    if (!clienteSeleccionado) {
+    if (!modoEdicion && !clienteSeleccionado) {
       mostrarToastError('Selecciona un cliente de la lista de sugerencias.');
       return;
     }
@@ -389,65 +485,99 @@ export const NuevaCotizacionScreen = () => {
       mostrarToastError('Agrega al menos un ítem a la cotización.');
       return;
     }
+    if (cargandoCostos) {
+      mostrarToastError('Espera a que terminen de cargar las tarifas.');
+      return;
+    }
+    // La estimación de costos es obligatoria: sin ella no se guarda la cotización.
+    if (problemas.length > 0) {
+      mostrarToastError(problemas[0]);
+      return;
+    }
+    if (exigeJustificacion && justificacion.trim().length < JUSTIFICACION_MINIMA) {
+      mostrarToastError(`Explica por qué aceptas un margen bajo el mínimo (al menos ${JUSTIFICACION_MINIMA} caracteres).`);
+      return;
+    }
 
-    const fecha = new Date().toISOString().split("T")[0];
-
-    const payload: CrearCotizacionPayload = {
-      clienteId: clienteSeleccionado.clienteId,
-      fecha,
+    const datos: CorregirCotizacionPayload = {
       solicitante: solicitanteNombre,
       moneda: divisa,
-      ...(solicitudId ? { solicitudId } : {}),
+      garantiaMeses,
       items: items.map((item, indice) => ({
         tipo: item.tipo,
         nombre: item.nombre,
         descripcion: item.descripcion,
         cantidad: item.cantidad,
         precioUnitario: item.precio,
+        ...(item.costoUnitario !== undefined ? { costoUnitario: item.costoUnitario } : {}),
         orden: indice,
         ...(item.tipo === 'Impresora' && item.detalleImpresora
           ? { detalleImpresora: item.detalleImpresora }
           : {}),
       })),
-      costos: CATEGORIAS_COSTO
-        .map((categoria) => ({ categoria, ...costos[categoria] }))
-        .filter((c) => Number(c.cantidad) > 0 && Number(c.costoUnitario) > 0)
-        .map(({ categoria, descripcion, cantidad, costoUnitario }) => ({
-          categoria,
-          descripcion,
-          cantidad: Number(cantidad),
-          costoUnitario: Number(costoUnitario),
-        })),
+      estimacion: aPayloadEstimacion(destino, tipoCambio, actividades),
+      ...(exigeJustificacion ? { justificacion: justificacion.trim() } : {}),
+    };
+
+    const enviar = async () => {
+      if (cotizacionId !== null) return corregirCotizacion(cotizacionId, datos);
+      if (!clienteSeleccionado) throw new Error('Selecciona un cliente de la lista de sugerencias.');
+
+      return crearCotizacion({
+        ...datos,
+        clienteId: clienteSeleccionado.clienteId,
+        fecha: new Date().toISOString().split("T")[0],
+        ...(solicitudId ? { solicitudId } : {}),
+      });
     };
 
     setGuardando(true);
     try {
-      const cotizacion = await crearCotizacion(payload);
-      // El aviso de éxito se muestra como toast en la pantalla del PDF (esta pantalla se desmonta al navegar)
-      navigate("/cotizacion-pdf", {
-        state: {
-          cotizacionCreada: true,
-          data: {
-            cliente: clienteNombre,
-            direccion: clienteDireccion,
-            ruc: clienteRuc,
-            correo: clienteSeleccionado.correoElectronico,
-            fecha,
-            solicitante: solicitanteNombre,
-            moneda: divisa,
-            numeroCotizacion: cotizacion.numeroCotizacion,
-            subtotal: cotizacion.subtotal,
-            igv: cotizacion.igv,
-            total: cotizacion.total,
-            items,
+      const cotizacion = await enviar();
+
+      if (cotizacion.estimacion.estado === 'VALIDADA') {
+        // El aviso de éxito se muestra como toast en la pantalla del PDF (esta pantalla se desmonta al navegar)
+        navigate(`/cotizaciones/${cotizacion.cotizacionId}/pdf`, { state: { cotizacionCreada: true } });
+      } else {
+        navigate('/cotizaciones', {
+          state: {
+            aviso: {
+              title: modoEdicion ? 'Cotización reenviada' : 'Cotización enviada a validación',
+              message: `${cotizacion.numeroCotizacion} espera la decisión del jefe. Podrás descargar el PDF cuando la valide.`,
+            },
           },
-        },
-      });
+        });
+      }
     } catch (error) {
       mostrarToastError(error instanceof Error ? error.message : 'No se pudo guardar la cotización.');
     } finally {
       setGuardando(false);
     }
+  }
+
+  // Al corregir, el formulario espera a tener la cotización devuelta (o muestra por qué no se puede corregir)
+  if (modoEdicion && (cargandoEdicion || errorEdicion)) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-[#DCE4F3] font-sans antialiased">
+        {cargandoEdicion ? (
+          <>
+            <LoadingSpinner />
+            <p className="text-sm text-gray-600">Cargando cotización...</p>
+          </>
+        ) : (
+          <>
+            <p className="text-black">{errorEdicion}</p>
+            <button
+              type="button"
+              onClick={cancelarCotizacion}
+              className="px-6 py-2.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all shadow-md cursor-pointer"
+            >
+              Regresar a Cotizaciones
+            </button>
+          </>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -465,8 +595,20 @@ export const NuevaCotizacionScreen = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-4xl font-bold text-black tracking-tight">Nueva cotización</h1>
+          <h1 className="text-4xl font-bold text-black tracking-tight">
+            {modoEdicion ? `Corregir cotización ${edicion?.numeroCotizacion ?? ''}` : 'Nueva cotización'}
+          </h1>
         </div>
+
+        {/* Por qué el jefe la devolvió */}
+        {modoEdicion && edicion?.devolucion && (
+          <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-3 text-sm text-amber-900 shadow-sm select-text">
+            <p className="font-semibold">
+              Devuelta por {edicion.devolucion.usuario} el {formatearFechaHora(edicion.devolucion.fecha)}
+            </p>
+            <p className="mt-1">{edicion.devolucion.motivo}</p>
+          </div>
+        )}
 
         {/* Contenedor del Formulario Principal */}
         <div className="w-full bg-[#222861] rounded-2xl p-8 shadow-lg flex-1 flex flex-col justify-between">
@@ -475,7 +617,7 @@ export const NuevaCotizacionScreen = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
             {/* COLUMNA IZQUIERDA: Formulario de entrada de ítem */}
-            <div className="lg:col-span-6 space-y-4">
+            <div className="lg:col-span-7 space-y-4">
 
               {/* SECCIÓN DATOS DEL CLIENTE EN 1 FILA */}
               <div className="space-y-2">
@@ -497,7 +639,8 @@ export const NuevaCotizacionScreen = () => {
                         setClienteNombre(e.target.value);
                       }}
                       onFocus={() => clienteNombre.trim() && setMostrarSugerencias(true)}
-                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
+                      readOnly={modoEdicion}
+                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-sm md:text-sm outline-none shadow-sm"
                     />
 
                     {mostrarSugerencias && sugerencias.length > 0 && (
@@ -525,7 +668,7 @@ export const NuevaCotizacionScreen = () => {
                       placeholder="Dirección"
                       value={clienteDireccion}
                       onChange={(e) => setClienteDireccion(e.target.value)}
-                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
+                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-sm md:text-sm outline-none shadow-sm"
                       readOnly
                     />
                   </div>
@@ -537,7 +680,7 @@ export const NuevaCotizacionScreen = () => {
                       placeholder="RUC"
                       value={clienteRuc}
                       onChange={(e) => setClienteRuc(e.target.value)}
-                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
+                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-sm md:text-sm outline-none shadow-sm"
                       readOnly
                     />
                   </div>
@@ -555,7 +698,7 @@ export const NuevaCotizacionScreen = () => {
                       placeholder="Nombre de solicitante"
                       value={solicitanteNombre}
                       onChange={(e) => setSolicitanteNombre(e.target.value)}
-                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-xs md:text-sm outline-none shadow-sm"
+                      className="w-full h-10 bg-white rounded-full px-4 text-black placeholder-gray-500 text-sm md:text-sm outline-none shadow-sm"
                     />
                   </div>
 
@@ -572,29 +715,39 @@ export const NuevaCotizacionScreen = () => {
                     </select>
                     <ChevronDown className="absolute right-3 bottom-3 w-4 h-4 text-black pointer-events-none" />
                   </div>
+
+                  {/* Garantía del servicio */}
+                  <div className="relative md:col-span-3">
+                    <select
+                      value={garantiaMeses}
+                      onChange={(e) => setGarantiaElegida(Number(e.target.value))}
+                      aria-label="Garantía del servicio"
+                      title="Garantía del servicio: meses en los que se pueden programar mantenimiento y soporte"
+                      className="w-full h-10 appearance-none bg-white rounded-full px-4 pr-10 text-sm text-black shadow-sm cursor-pointer focus:outline-none"
+                    >
+                      {GARANTIA_MESES_OPCIONES.map((meses) => (
+                        <option key={meses} value={meses}>Garantía: {meses} meses</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 bottom-3 w-4 h-4 text-black pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
-              {/* DESPLEGABLE: Inductores de costo (uso interno, no aparecen en el PDF) */}
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setIsCostosOpen(!isCostosOpen)}
-                  className="w-full bg-[#E2E4E9] rounded-full px-5 py-2.5 flex items-center justify-between text-black hover:bg-white transition-all shadow-sm focus:outline-none"
-                >
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    <Wallet className="w-4 h-4 text-black" />
-                    <span className="text-sm font-medium">Inductores de costo (materiales, viáticos, horas-hombre)</span>
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-black transition-transform duration-300 cursor-pointer ${isCostosOpen ? 'rotate-180' : 'rotate-0'}`}
-                  />
-                </button>
-
-                {isCostosOpen && (
-                  <InductoresCosto costos={costos} onChange={actualizarCosto} />
-                )}
-              </div>
+              {/* Estimación de costos (obligatoria, uso interno: no aparece en el PDF) */}
+              <HojaCostos
+                cargando={cargandoCostos}
+                errorTarifario={errorTarifario}
+                destinos={tarifario?.destinos ?? [DESTINO_GENERAL]}
+                destino={destino}
+                onDestino={setDestino}
+                moneda={divisa}
+                tipoCambio={tipoCambio}
+                onTipoCambio={setTipoCambio}
+                actividades={actividades}
+                onActividades={setActividades}
+                resultado={resultado}
+              />
 
               {/* Nombre y tipo del ítem */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end pt-2">
@@ -662,6 +815,20 @@ export const NuevaCotizacionScreen = () => {
                         className="w-full h-10 bg-white rounded-full px-4 text-black text-center text-sm outline-none shadow-sm my-2"
                       />
                     </div>
+                    {/* Costo de compra (uso interno): los servicios no lo llevan, su costo es la mano de obra */}
+                    {TIPOS_CON_COSTO.includes(tipo) && (
+                      <div className="flex-1 space-y-1">
+                        <label className="text-s text-white" title="Uso interno: no aparece en el PDF">Costo de compra:</label>
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="0.00"
+                          value={costoCompra}
+                          onChange={(e) => setCostoCompra(e.target.value ? Number(e.target.value) : '')}
+                          className="w-full h-10 bg-white rounded-full px-4 text-black text-center text-sm outline-none shadow-sm my-2"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Total del ítem actual */}
@@ -725,7 +892,7 @@ export const NuevaCotizacionScreen = () => {
             </div>
 
             {/* COLUMNA DERECHA: Lista de ítems añadidos */}
-            <div className="lg:col-span-6 flex flex-col h-full justify-between space-y-3">
+            <div className="lg:col-span-5 flex flex-col h-full justify-between space-y-3">
 
               {/* Contenedor de lista */}
               <div className="space-y-2.5 overflow-y-auto max-h-[350px] pr-1">
@@ -742,6 +909,7 @@ export const NuevaCotizacionScreen = () => {
                       tipo={item.tipo}
                       cantidad={item.cantidad}
                       total={item.total}
+                      costoUnitario={item.costoUnitario}
                       enEdicion={item.id === itemEditandoId}
                       onEdit={handleEditItem}
                       onDelete={handleDeleteItem}
@@ -750,6 +918,27 @@ export const NuevaCotizacionScreen = () => {
                 )}
               </div>
 
+              {/* Costo estimado y margen (uso interno): siempre a la vista mientras se arma la cotización */}
+              <ResumenCostos
+                resultado={resultado}
+                problemas={problemas}
+                cargando={cargandoCostos}
+                moneda={divisa}
+                margenMinimo={margenMinimo}
+                errorParametros={errorParametros}
+              />
+
+              {/* Servicios cerrados parecidos: contraste del cálculo con la realidad */}
+              <PanelAnaloga
+                tema="oscuro"
+                analoga={analoga}
+                error={errorAnaloga}
+                // Mientras solo esté el diagnóstico (ya pagado) no hay una estimación que corregir
+                costoParametrico={resultado.directosFuturos > 0 ? resultado.costoTotal : 0}
+                ventaSoles={resultado.ventaSoles}
+                onCopiar={copiarParametros}
+              />
+
               {/* Total acumulado general */}
               <div className='space-y-2.5 overflow-y-auto max-h-[350px] pr-1'>
                 <div className="bg-[#8E92A7] rounded-xl p-3.5 flex items-center justify-between text-black font-bold shadow-inner mt-4">
@@ -757,11 +946,39 @@ export const NuevaCotizacionScreen = () => {
                   <span className="text-base font-bold tracking-wide">{totalConIGV.toFixed(2)}</span>
                 </div>
 
+                {/* El jefe valida al guardar: con el margen bajo el mínimo tiene que dejar su justificación */}
+                {exigeJustificacion && (
+                  <div className="space-y-1 pt-2">
+                    <label className="block text-sm text-white" htmlFor="justificacion-margen">
+                      Justificación: el margen queda bajo el mínimo de {margenMinimo} %
+                    </label>
+                    <textarea
+                      id="justificacion-margen"
+                      placeholder="Por qué aceptas este margen (queda registrado)"
+                      value={justificacion}
+                      onChange={(e) => setJustificacion(e.target.value)}
+                      className="w-full h-20 bg-white rounded-2xl p-3 text-black placeholder-gray-500 text-sm outline-none resize-none shadow-sm select-text"
+                    />
+                  </div>
+                )}
+
+                <p className="text-sm text-slate-300 pt-2">
+                  {esJefe
+                    ? 'Como jefe, la cotización queda validada al guardar y podrás descargar su PDF.'
+                    : 'Al guardar, la cotización se envía al jefe para su validación. Podrás descargar el PDF cuando la valide.'}
+                </p>
+
                 {/* Botones de acción inferiores */}
                 <div className="flex justify-end items-center gap-5 pt-2">
                   <button onClick={guardarCotizacion} disabled={guardando}
                     className="px-8 py-2.5 bg-[#22C55E] text-black font-medium rounded-full hover:bg-[#16A34A] transition-all shadow-md text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                    {guardando ? 'Guardando cotización...' : 'Guardar'}
+                    {guardando
+                      ? 'Guardando cotización...'
+                      : esJefe
+                        ? 'Guardar y validar'
+                        : modoEdicion
+                          ? 'Guardar y reenviar a validación'
+                          : 'Guardar y enviar a validación'}
                   </button>
                   <button
                     type="button"

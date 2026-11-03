@@ -13,6 +13,7 @@ import {
 import { formatearFechaISO, visitasDeEtapa, type VisitaProgramada } from '../services/visitasProgramadas';
 import { garantiaDelServicio, garantiaVigente } from '../services/mantenimientos';
 import { esSeleccionVisita, type SeleccionVisita } from '../services/detalleVisita';
+import type { ResumenCostosServicio } from '../services/costosReales';
 
 interface SeguimientoVisitasProps {
   visitas: VisitaTecnica[];
@@ -20,6 +21,11 @@ interface SeguimientoVisitasProps {
   seleccion: SeleccionVisita | null;
   // Servicio cuya etapa se está finalizando, para deshabilitar el botón mientras responde el servidor.
   finalizandoId: number | null;
+  // Servicio cuya liquidación de costos se está preparando antes de finalizar la etapa.
+  preparandoId: number | null;
+  // Punto del control de costos de cada servicio (solo el trabajador y el jefe lo ven).
+  costos: ResumenCostosServicio[];
+  onImprevistos: (visita: VisitaTecnica) => void;
   onSeleccionar: (seleccion: SeleccionVisita) => void;
   onAgregar: (visita: VisitaTecnica, tipo: TipoVisita) => void;
   onEditar: (visita: VisitaTecnica, visitaProgramada: VisitaProgramada) => void;
@@ -29,7 +35,7 @@ interface SeguimientoVisitasProps {
 
 const ESTILO_FILA = 'w-full text-left text-sm rounded-xl px-3.5 py-2.5 transition-colors cursor-pointer';
 
-// Servicios -> etapas -> visitas. El empleado abre los desplegables, programa las visitas de cada etapa,
+// Servicios -> etapas -> visitas. El trabajador abre los desplegables, programa las visitas de cada etapa,
 // elige una para ver su detalle y finaliza la instalación, lo que habilita a la vez el mantenimiento preventivo
 // y el soporte técnico para el técnico. Estos dos no se finalizan: terminan al cerrar el servicio.
 export default function SeguimientoVisitas({
@@ -37,6 +43,9 @@ export default function SeguimientoVisitas({
   visitasProgramadas,
   seleccion,
   finalizandoId,
+  preparandoId,
+  costos,
+  onImprevistos,
   onSeleccionar,
   onAgregar,
   onEditar,
@@ -62,9 +71,11 @@ export default function SeguimientoVisitas({
         const claveServicio = `${visita.visitaId}`;
         const servicioAbierto = abiertos.has(claveServicio);
         const delServicio = visitasProgramadas.filter((vp) => vp.visitaId === visita.visitaId);
-        const garantia = garantiaDelServicio(delServicio);
+        const garantia = garantiaDelServicio(delServicio, visita.garantiaMeses);
         // Programar es posible con el servicio activo y abierto, desde la etapa en curso en adelante.
         const servicioEditable = visita.estado === 'ACTIVO' && visita.cierre === undefined;
+        const control = costos.find((c) => c.visitaId === visita.visitaId);
+        const sinMonto = control?.imprevistos?.pendientes ?? 0;
 
         return (
           <section key={visita.visitaId} className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -89,11 +100,25 @@ export default function SeguimientoVisitas({
 
             {servicioAbierto && (
               <ul className="border-t border-slate-100 divide-y divide-slate-100">
+                {servicioEditable && control?.aplicaControl && (
+                  <li className="px-5 py-3 flex items-center justify-between gap-3">
+                    <p className="text-sm text-slate-500">
+                      Control de costos: registra los imprevistos del servicio (doble pasaje, material faltante…).
+                    </p>
+                    <button
+                      onClick={() => onImprevistos(visita)}
+                      className="shrink-0 flex items-center gap-1 px-4 py-1.5 bg-amber-100 text-amber-800 text-sm font-medium rounded-full hover:bg-amber-200 transition-colors shadow-sm cursor-pointer"
+                    >
+                      Imprevistos
+                      {sinMonto > 0 && <span className="text-[11px] font-bold">({sinMonto} sin monto)</span>}
+                    </button>
+                  </li>
+                )}
                 {visita.cancelacion && (
                   <li className="px-5 py-3 bg-rose-50 text-sm text-rose-800">
                     <p className="font-semibold">Servicio cancelado: no se llegó a un acuerdo con el cliente.</p>
                     <p className="mt-0.5">Motivo: {visita.cancelacion.motivo}</p>
-                    <p className="mt-0.5 text-xs text-rose-600">{formatearFechaHora(visita.cancelacion.fecha)}</p>
+                    <p className="mt-0.5 text-sm text-rose-600">{formatearFechaHora(visita.cancelacion.fecha)}</p>
                   </li>
                 )}
                 {ETAPAS_SERVICIO.map((etapa, indice) => {
@@ -142,7 +167,7 @@ export default function SeguimientoVisitas({
                             <Lock size={14} className="text-slate-400" />
                           )}
                           <span className="font-medium text-slate-800">{etapa}</span>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-sm text-slate-400">
                             {completada ? 'Completada' : activa ? 'En curso' : 'Pendiente'}
                           </span>
                         </span>
@@ -181,7 +206,7 @@ export default function SeguimientoVisitas({
                                 {puedeFinalizar && (
                                   <button
                                     onClick={() => onFinalizarEtapa(visita)}
-                                    disabled={sinVisitas || hayPendientes || finalizandoId !== null}
+                                    disabled={sinVisitas || hayPendientes || finalizandoId !== null || preparandoId !== null}
                                     title={
                                       sinVisitas
                                         ? 'Programa al menos una visita antes de finalizar la etapa'
@@ -192,7 +217,11 @@ export default function SeguimientoVisitas({
                                     className="flex items-center gap-1 px-4 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-full hover:bg-emerald-700 transition-all shadow-sm cursor-pointer disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
                                   >
                                     <Flag className="w-4 h-4" />
-                                    {finalizandoId === visita.visitaId ? 'Finalizando etapa...' : 'Finalizar etapa'}
+                                    {preparandoId === visita.visitaId
+                                      ? 'Preparando costos...'
+                                      : finalizandoId === visita.visitaId
+                                        ? 'Finalizando etapa...'
+                                        : 'Finalizar etapa'}
                                   </button>
                                 )}
                                 {puedeProgramar && (

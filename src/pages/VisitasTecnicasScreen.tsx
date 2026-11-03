@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useVisitas } from "../hooks/useVisitas";
 import { useVisitasProgramadas } from "../hooks/useVisitasProgramadas";
 import { useSolicitudes } from "../hooks/useSolicitudes";
+import { useResumenCostos } from "../hooks/useResumenCostos";
 import VisitasTecnicasTable from "../components/VisitasTecnicasTable";
 import VisitaProgramadaModal, { type DatosVisitaProgramada } from "../components/VisitaProgramadaModal";
 import SeguimientoVisitas from "../components/SeguimientoVisitas";
@@ -13,9 +14,12 @@ import {
 } from "../services/detalleVisita";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import FinalizarEtapaModal from "../components/FinalizarEtapaModal";
+import LiquidacionCostosModal from "../components/LiquidacionCostosModal";
+import ImprevistoModal from "../components/ImprevistoModal";
 import Toast from "../components/Toast";
 import { agregarNotificacion } from "../services/notificaciones";
 import { garantiaDelServicio } from "../services/mantenimientos";
+import { obtenerLiquidacion, type EtapaPayload, type PropuestaConTabla } from "../services/costosReales";
 import {
   agregarVisitaProgramada,
   editarVisitaProgramada,
@@ -44,14 +48,19 @@ export default function VisitasTecnicasScreen() {
   const visitas = useVisitas();
   const visitasProgramadas = useVisitasProgramadas();
   const solicitudes = useSolicitudes();
+  const costos = useResumenCostos();
 
   const [programacion, setProgramacion] = useState<ProgramacionEnCurso | null>(null);
   const [visitaProgramadaEliminar, setVisitaProgramadaEliminar] = useState<VisitaProgramada | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [finalizandoId, setFinalizandoId] = useState<number | null>(null);
-  // Servicio cuya instalación se está confirmando en el modal.
+  // Servicio cuya instalación se está confirmando en el modal (servicios anteriores al control de costos).
   const [visitaFinalizar, setVisitaFinalizar] = useState<VisitaTecnica | null>(null);
+  // Servicio con control de costos: la instalación se finaliza confirmando sus costos reales (la tabla ya viene llena).
+  const [liquidacion, setLiquidacion] = useState<{ visita: VisitaTecnica; propuesta: PropuestaConTabla } | null>(null);
+  const [preparandoId, setPreparandoId] = useState<number | null>(null);
+  const [visitaImprevistos, setVisitaImprevistos] = useState<VisitaTecnica | null>(null);
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>({
     show: false,
     type: "error",
@@ -81,7 +90,10 @@ export default function VisitasTecnicasScreen() {
 
   // El mantenimiento y el soporte solo se programan dentro de la garantía.
   const garantiaFin = programacion && programacion.tipo !== 'INSTALACION'
-    ? garantiaDelServicio(visitasProgramadas.filter((v) => v.visitaId === programacion.visita.visitaId))?.fin
+    ? garantiaDelServicio(
+        visitasProgramadas.filter((v) => v.visitaId === programacion.visita.visitaId),
+        programacion.visita.garantiaMeses
+      )?.fin
     : undefined;
 
   const handleGuardarVisitaProgramada = async (datos: DatosVisitaProgramada) => {
@@ -130,25 +142,39 @@ export default function VisitasTecnicasScreen() {
   const etapaFinalizable = ETAPAS_SERVICIO[INDICE_INSTALACION];
   const etapasHabilitadas = [ETAPAS_SERVICIO[2], ETAPAS_SERVICIO[3]];
 
-  const handleFinalizarEtapa = (visita: VisitaTecnica) => {
-    if (estadoEtapa(visita, INDICE_INSTALACION) !== 'activa' || finalizandoId !== null) return;
-    setVisitaFinalizar(visita);
+  const handleFinalizarEtapa = async (visita: VisitaTecnica) => {
+    if (estadoEtapa(visita, INDICE_INSTALACION) !== 'activa' || finalizandoId !== null || preparandoId !== null) return;
+
+    // Si el servicio pasa por el control de costos, la etapa se finaliza confirmando los costos reales de diagnóstico e instalación
+    setPreparandoId(visita.visitaId);
+    try {
+      const propuesta = await obtenerLiquidacion(visita.visitaId, 'INSTALACION');
+      if (propuesta.aplica && !propuesta.yaLiquidada) setLiquidacion({ visita, propuesta });
+      else setVisitaFinalizar(visita);
+    } catch (e) {
+      mostrarError(e, "No se pudo preparar la liquidación de costos.");
+    } finally {
+      setPreparandoId(null);
+    }
   };
 
-  const confirmarFinalizarEtapa = async () => {
-    if (!visitaFinalizar || finalizandoId !== null) return;
-    const visita = visitaFinalizar;
+  // `etapas` son los costos reales que confirmó el trabajador; sin ellos (servicio anterior al control) solo se finaliza.
+  const finalizar = async (visita: VisitaTecnica, etapas?: EtapaPayload[]) => {
+    if (finalizandoId !== null) return;
 
     setFinalizandoId(visita.visitaId);
     try {
-      await finalizarEtapaServicio(visita.visitaId);
+      await finalizarEtapaServicio(visita.visitaId, etapas);
     } catch (e) {
+      // Con la tabla de costos abierta se queda abierta: así no se pierde lo que se corrigió
+      setVisitaFinalizar(null);
       return mostrarError(e, "No se pudo finalizar la etapa.");
     } finally {
       setFinalizandoId(null);
-      setVisitaFinalizar(null);
     }
 
+    setVisitaFinalizar(null);
+    setLiquidacion(null);
     agregarNotificacion({
       rolDestino: 'tecnico',
       tecnicoDestino: visita.tecnicoNombre,
@@ -157,6 +183,8 @@ export default function VisitasTecnicasScreen() {
     });
     setToast({ show: true, type: "success", message: `La etapa "${etapaFinalizable}" se finalizó.` });
   };
+
+  const confirmarFinalizarEtapa = () => visitaFinalizar && finalizar(visitaFinalizar);
 
   return (
     <div className="flex flex-1 bg-[#DCE4F3] font-sans antialiased">
@@ -174,6 +202,9 @@ export default function VisitasTecnicasScreen() {
             visitasProgramadas={visitasProgramadas}
             seleccion={seleccionDetalle}
             finalizandoId={finalizandoId}
+            preparandoId={preparandoId}
+            costos={costos}
+            onImprevistos={setVisitaImprevistos}
             onSeleccionar={setSeleccionDetalle}
             onAgregar={(visita, tipo) => setProgramacion({ visita, tipo, editando: null })}
             onEditar={(visita, visitaProgramada) =>
@@ -208,6 +239,24 @@ export default function VisitasTecnicasScreen() {
           guardando={finalizandoId !== null}
           onClose={() => setVisitaFinalizar(null)}
           onConfirmar={confirmarFinalizarEtapa}
+        />
+
+        <LiquidacionCostosModal
+          isOpen={liquidacion !== null}
+          titulo="Finalizar etapa"
+          textoConfirmar="Confirmar costos y finalizar etapa"
+          clienteNombre={liquidacion?.visita.clienteNombre ?? ''}
+          nota={`Se finaliza la etapa "${etapaFinalizable}" y se habilitan ${etapasHabilitadas.map((e) => `"${e}"`).join(' y ')} para el técnico.`}
+          propuesta={liquidacion?.propuesta ?? null}
+          guardando={finalizandoId !== null}
+          onClose={() => setLiquidacion(null)}
+          onConfirmar={(etapas) => liquidacion && finalizar(liquidacion.visita, etapas)}
+        />
+
+        <ImprevistoModal
+          isOpen={visitaImprevistos !== null}
+          visita={visitaImprevistos}
+          onClose={() => setVisitaImprevistos(null)}
         />
 
         <ConfirmDeleteModal

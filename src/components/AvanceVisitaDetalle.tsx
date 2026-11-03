@@ -14,7 +14,7 @@ export default function AvanceVisitaDetalle({ avance }: { avance: AvanceVisita }
                 key={evidencia.url}
                 href={evidencia.url}
                 download={evidencia.nombre}
-                className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1 text-xs text-slate-700 shadow-sm hover:bg-blue-50"
+                className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1 text-sm text-slate-700 shadow-sm hover:bg-blue-50"
               >
                 <FileText size={12} />
                 {evidencia.nombre}

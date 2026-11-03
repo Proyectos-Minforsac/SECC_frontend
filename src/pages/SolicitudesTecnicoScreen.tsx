@@ -17,7 +17,7 @@ export default function SolicitudesTecnicoScreen() {
   const tecnicoNombre = usuario?.nombre ?? "";
 
   const todasLasSolicitudes = useSolicitudes();
-  // Solo las solicitudes que el empleado envió a este técnico
+  // Solo las solicitudes que el trabajador envió a este técnico
   const solicitudes = todasLasSolicitudes.filter((s) => s.tecnicos.includes(tecnicoNombre));
   const [solicitudActiva, setSolicitudActiva] = useState<SolicitudServicio | null>(null);
   const [detalleId, setDetalleId] = useState<number | null>(null);
@@ -60,7 +60,7 @@ export default function SolicitudesTecnicoScreen() {
     setEnviando(false);
 
     agregarNotificacion({
-      rolDestino: 'empleado',
+      rolDestino: 'trabajador',
       solicitudId: solicitudActiva.solicitudId,
       mensaje: `${tecnicoNombre} envió una oferta de ${formatearMonto(montoVisita)} para la solicitud de ${solicitudActiva.clienteNombre}.`,
     });
@@ -80,6 +80,7 @@ export default function SolicitudesTecnicoScreen() {
                 <th className="py-3 px-3.5 text-center">N°</th>
                 <th className="py-3 px-3.5">Cliente</th>
                 <th className="py-3 px-3.5">Descripción</th>
+                <th className="py-3 px-3.5">Servicio</th>
                 <th className="py-3 px-3.5 text-center">Fecha</th>
                 <th className="py-3 px-3.5 text-center">Estado</th>
                 <th className="py-3 px-3.5 text-right">Mi oferta de visita</th>
@@ -101,6 +102,9 @@ export default function SolicitudesTecnicoScreen() {
                       <td className="py-2.5 px-3.5 font-medium text-slate-500 text-center">{solicitud.solicitudId}</td>
                       <td className="py-2.5 px-3.5 font-semibold text-slate-800">{solicitud.clienteNombre}</td>
                       <td className="py-2.5 px-3.5 text-slate-600">{solicitud.descripcion}</td>
+                      <td className="py-2.5 px-3.5 text-slate-700">
+                        {solicitud.tipoServicio || <span className="text-slate-400">—</span>}
+                      </td>
                       <td className="py-2.5 px-3.5 text-center whitespace-nowrap">{solicitud.fecha}</td>
                       <td className="py-2.5 px-3.5 text-center">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${ESTILO_ESTADO[solicitud.estado]}`}>
@@ -114,7 +118,7 @@ export default function SolicitudesTecnicoScreen() {
                         {puedeOfertar && (
                           <button
                             onClick={() => abrirModal(solicitud)}
-                            className="px-4 py-1 bg-[#2A317A] text-white text-xs font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+                            className="px-4 py-1 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer whitespace-nowrap"
                           >
                             {oferta ? "Editar oferta" : "Enviar oferta"}
                           </button>
@@ -122,7 +126,7 @@ export default function SolicitudesTecnicoScreen() {
                         {puedeVerDetalles && (
                           <button
                             onClick={() => setDetalleId(solicitud.solicitudId)}
-                            className="px-4 py-1 bg-[#2A317A] text-white text-xs font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+                            className="px-4 py-1 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer whitespace-nowrap"
                           >
                             Ver detalles
                           </button>
@@ -133,7 +137,7 @@ export default function SolicitudesTecnicoScreen() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-slate-400">
+                  <td colSpan={8} className="py-6 text-center text-slate-400">
                     No has recibido solicitudes de servicio.
                   </td>
                 </tr>

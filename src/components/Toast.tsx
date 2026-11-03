@@ -39,7 +39,7 @@ export default function Toast({ show, type = 'success', title, message, onClose,
 					<p className="text-sm font-semibold">
 						{title ?? (isSuccess ? 'Registro exitoso' : 'Ocurrió un error')}
 					</p>
-					<p className="text-xs mt-0.5 opacity-90">{message}</p>
+					<p className="text-sm mt-0.5 opacity-90">{message}</p>
 				</div>
 				<button
 					onClick={onClose}

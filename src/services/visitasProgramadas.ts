@@ -1,13 +1,22 @@
 import type { EvidenciaVisita, TipoVisita } from './visitas';
+import type { ConceptoImprevisto } from './costosReales';
 import { pedir } from './http';
+
+// Imprevisto que el técnico avisa en su reporte (doble pasaje, material faltante...). No lleva monto: lo pone el trabajador.
+export interface AvisoImprevisto {
+  concepto: ConceptoImprevisto;
+  descripcion: string;
+}
 
 // Registro que el técnico deja al terminar una visita programada.
 export interface AvanceVisita {
   descripcion: string;
   evidencias: EvidenciaVisita[];
+  // Solo al guardar el reporte: el servidor no lo devuelve dentro del avance.
+  imprevisto?: AvisoImprevisto;
 }
 
-// Cita concreta (fecha/hora) que el empleado agenda dentro de un servicio activo,
+// Cita concreta (fecha/hora) que el trabajador agenda dentro de un servicio activo,
 // p.ej. una visita de instalación. Varias pueden pertenecer al mismo servicio (visitaId).
 export interface VisitaProgramada {
   visitaProgramadaId: number;
@@ -26,7 +35,7 @@ export interface VisitaProgramada {
 export type NuevaVisitaProgramada = Omit<VisitaProgramada, 'visitaProgramadaId' | 'avance'>;
 
 // Las visitas programadas se cargan del backend y se guardan aquí para compartirlas entre las pantallas
-// del empleado y del técnico. Cada operación devuelve la visita actualizada y la reemplaza en el store.
+// del trabajador y del técnico. Cada operación devuelve la visita actualizada y la reemplaza en el store.
 let visitasProgramadas: VisitaProgramada[] = [];
 const listeners = new Set<() => void>();
 
@@ -101,7 +110,7 @@ export const guardarAvanceVisitaProgramada = async (visitaProgramadaId: number, 
   const visita = await pedir<VisitaProgramada>(
     `/visitas-programadas/${visitaProgramadaId}/avance`,
     'POST',
-    { descripcion: avance.descripcion },
+    { descripcion: avance.descripcion, ...(avance.imprevisto ? { imprevisto: avance.imprevisto } : {}) },
     'No se pudo guardar el avance de la visita'
   );
   evidenciasAvance.set(visitaProgramadaId, avance.evidencias);

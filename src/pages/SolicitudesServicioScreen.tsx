@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { obtenerClientes, type Cliente } from "../services/clientes"
-import { obtenerTecnicos, type Tecnico } from "../services/tecnicos"
+import { obtenerTecnicos, ofreceServicio, type Tecnico } from "../services/tecnicos"
 import {
   aceptarOferta,
   autorizarViaje,
@@ -9,8 +9,10 @@ import {
   eliminarSolicitud,
   formatearFechaISO,
   rechazarOferta,
+  TIPOS_SERVICIO,
   type AutorizacionViaje,
   type SolicitudServicio,
+  type TipoServicio,
 } from "../services/solicitudes"
 import { useSolicitudes } from "../hooks/useSolicitudes"
 import SolicitudesServicioTable from "../components/SolicitudesServicioTable"
@@ -40,6 +42,7 @@ export default function SolicitudesServicioScreen() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null);
   const [descripcion, setDescripcion] = useState('');
+  const [tipoServicio, setTipoServicio] = useState<TipoServicio | ''>('');
 
   // Ubicación seleccionada y técnicos que pertenecen a ella
   const [ubicacionesDisponibles, setUbicacionesDisponibles] = useState<string[]>([]);
@@ -57,8 +60,20 @@ export default function SolicitudesServicioScreen() {
   const tieneOfertas = (solicitudEditando?.ofertas.length ?? 0) > 0;
   const yaOferto = (tecnico: Tecnico) =>
     solicitudEditando?.ofertas.some((o) => o.tecnicoNombre === tecnico.nombre) ?? false;
+  // Las solicitudes anteriores al tipo de servicio no tienen uno: a esas se les puede asignar aunque tengan ofertas.
+  const tipoBloqueado = tieneOfertas && Boolean(solicitudEditando?.tipoServicio);
 
-  // Oferta recién aceptada, a la espera de que el empleado autorice el viaje del técnico.
+  // Solo se ofrecen los técnicos que prestan el servicio elegido (y quienes ya ofertaron, que no se pueden quitar).
+  const tecnicosDelTipo = tecnicos.filter(
+    (t) => (tipoServicio !== '' && ofreceServicio(t, tipoServicio)) || yaOferto(t)
+  );
+
+  const cambiarTipoServicio = (tipo: TipoServicio) => {
+    setTipoServicio(tipo);
+    setTecnicosSeleccionados((prev) => prev.filter((t) => ofreceServicio(t, tipo) || yaOferto(t)));
+  }
+
+  // Oferta recién aceptada, a la espera de que el trabajador autorice el viaje del técnico.
   const [viajePorAutorizar, setViajePorAutorizar] = useState<{
     solicitudId: number;
     clienteNombre: string;
@@ -121,6 +136,7 @@ export default function SolicitudesServicioScreen() {
   const abrirEdicion = (solicitud: SolicitudServicio) => {
     setSolicitudEditando(solicitud);
     setDescripcion(solicitud.descripcion);
+    setTipoServicio(solicitud.tipoServicio);
     setClienteSeleccionado(solicitud.cliente ?? null);
     setBusqueda(solicitud.cliente?.nombre ?? "");
     setTecnicosSeleccionados(todosLosTecnicos.filter((t) => solicitud.tecnicoIds.includes(t.tecnicoId)));
@@ -132,6 +148,7 @@ export default function SolicitudesServicioScreen() {
     setSolicitudEditando(null);
     setError("");
     setDescripcion("");
+    setTipoServicio("");
     setBusqueda("");
     setClienteSeleccionado(null);
     setTecnicoUbicacion("");
@@ -143,6 +160,7 @@ export default function SolicitudesServicioScreen() {
     e.preventDefault();
 
     if (!descripcion.trim()) return setError("Ingresa una descripción.");
+    if (!tipoServicio) return setError("Selecciona el tipo de servicio.");
     if (!clienteSeleccionado) return setError("Selecciona un cliente.");
     if (tecnicosSeleccionados.length === 0) return setError("Selecciona al menos un técnico.");
 
@@ -151,6 +169,7 @@ export default function SolicitudesServicioScreen() {
       const datos = {
         clienteId: clienteSeleccionado.clienteId,
         descripcion: descripcion.trim(),
+        tipoServicio,
         tecnicoIds: tecnicosSeleccionados.map((t) => t.tecnicoId),
       };
       const guardada = solicitudEditando
@@ -290,9 +309,33 @@ export default function SolicitudesServicioScreen() {
                 />
               </div>
 
+              <label className="text-white">Tipo de servicio</label>
+              <div className="relative h-10">
+                <select
+                  value={tipoServicio}
+                  disabled={tipoBloqueado}
+                  onChange={(e) => cambiarTipoServicio(e.target.value as TipoServicio)}
+                  className="w-full h-10 appearance-none bg-white rounded-full px-5 pr-11 py-2.5 text-sm text-black shadow-sm cursor-pointer focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <option value="" disabled>Seleccionar tipo de servicio</option>
+                  {TIPOS_SERVICIO.map((tipo) => (
+                    <option key={tipo} value={tipo}>{tipo}</option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                />
+              </div>
+              {tipoBloqueado && (
+                <p className="text-sm text-white/80 px-1">
+                  El tipo de servicio no se puede cambiar porque la solicitud ya tiene ofertas.
+                </p>
+              )}
+
               <label className="text-white">{tieneOfertas ? "Cliente" : "Seleccionar cliente"}</label>
               {tieneOfertas ? (
-                <p className="text-xs text-white/80 px-1">
+                <p className="text-sm text-white/80 px-1">
                   El cliente no se puede cambiar porque la solicitud ya tiene ofertas.
                 </p>
               ) : (
@@ -368,8 +411,8 @@ export default function SolicitudesServicioScreen() {
                       </tr>
                     </thead>
                     <tbody>
-                      {tecnicos.length > 0 ? (
-                        tecnicos.map((tecnico) => (
+                      {tecnicosDelTipo.length > 0 ? (
+                        tecnicosDelTipo.map((tecnico) => (
                           <tr
                             key={tecnico.tecnicoId}
                             onClick={() => alternarTecnico(tecnico)}
@@ -377,13 +420,17 @@ export default function SolicitudesServicioScreen() {
                           >
                             <td className="px-4 py-2 text-black">
                               {tecnico.nombre}
-                              {yaOferto(tecnico) && <span className="text-xs text-gray-500"> · ya envió su oferta</span>}
+                              {yaOferto(tecnico) && <span className="text-sm text-gray-500"> · ya envió su oferta</span>}
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td className="px-4 py-2 text-gray-500 italic">No hay técnicos en esta ubicación</td>
+                          <td className="px-4 py-2 text-gray-500 italic">
+                            {tipoServicio
+                              ? `No hay técnicos de ${tipoServicio} en esta ubicación`
+                              : "Elige primero el tipo de servicio"}
+                          </td>
                         </tr>
                       )}
                     </tbody>

@@ -35,12 +35,12 @@ export default function OfertaFila({ oferta, puedeDecidir, decidiendo = null, on
             download={oferta.archivoNombre}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline text-xs"
+            className="text-blue-600 hover:text-blue-800 underline text-sm"
           >
             {oferta.archivoNombre || 'Ver cotización'}
           </a>
         ) : (
-          <span className="text-slate-400 italic text-xs">Sin archivo</span>
+          <span className="text-slate-400 italic text-sm">Sin archivo</span>
         )}
       </div>
 
@@ -49,14 +49,14 @@ export default function OfertaFila({ oferta, puedeDecidir, decidiendo = null, on
           <button
             disabled={decidiendo !== null}
             onClick={onAceptar}
-            className="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-full hover:bg-emerald-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 bg-emerald-600 text-white text-sm font-medium rounded-full hover:bg-emerald-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {aceptando ? 'Aceptando oferta...' : 'Aceptar'}
           </button>
           <button
             disabled={decidiendo !== null}
             onClick={onRechazar}
-            className="px-3 py-1 bg-rose-600 text-white text-xs font-medium rounded-full hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 bg-rose-600 text-white text-sm font-medium rounded-full hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {rechazando ? 'Rechazando oferta...' : 'Rechazar'}
           </button>

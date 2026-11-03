@@ -60,7 +60,7 @@ export default function AutorizarViajeModal({
 
         <label className="text-white">Fechas tentativas</label>
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-xs text-white/80">
+          <label className="flex flex-col gap-1 text-sm text-white/80">
             Desde
             <input
               type="date"
@@ -69,7 +69,7 @@ export default function AutorizarViajeModal({
               className="w-full bg-white rounded-full px-4 py-2 text-sm text-black outline-none shadow-sm"
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-white/80">
+          <label className="flex flex-col gap-1 text-sm text-white/80">
             Hasta
             <input
               type="date"

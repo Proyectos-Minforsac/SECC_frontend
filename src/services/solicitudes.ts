@@ -15,13 +15,18 @@ export interface OfertaVisita {
   estado: EstadoOferta;
 }
 
-// Autorización del viaje que el empleado envía al técnico elegido.
+// Autorización del viaje que el trabajador envía al técnico elegido.
 export interface AutorizacionViaje {
   instrucciones: string;
   // Fechas tentativas de la visita, en formato YYYY-MM-DD
   fechaInicio: string;
   fechaFin: string;
 }
+
+// Son los mismos servicios que ofrecen los técnicos (campo "servicio" de Técnicos), para poder enviar la
+// solicitud solo a quienes lo prestan. Para agregar un tipo basta con sumarlo aquí y en el backend (solicitudModel).
+export const TIPOS_SERVICIO = ['Aire Condicionado', 'Cableado estructurado'] as const;
+export type TipoServicio = (typeof TIPOS_SERVICIO)[number];
 
 export interface SolicitudServicio {
   solicitudId: number;
@@ -30,6 +35,8 @@ export interface SolicitudServicio {
   cliente?: Cliente;
   autorizacion?: AutorizacionViaje;
   descripcion: string;
+  // Vacío en las solicitudes anteriores a este campo.
+  tipoServicio: TipoServicio | '';
   fecha: string;
   // Técnicos a quienes se envió la solicitud (nombres e ids, en el mismo orden)
   tecnicos: string[];
@@ -41,6 +48,7 @@ export interface SolicitudServicio {
 export interface NuevaSolicitudServicio {
   clienteId: number;
   descripcion: string;
+  tipoServicio: TipoServicio;
   tecnicoIds: number[];
 }
 
@@ -54,7 +62,7 @@ export interface NuevaOferta {
 const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 
 // Las solicitudes se cargan del backend y se guardan aquí para compartirlas entre las pantallas
-// del empleado y del técnico. Cada operación devuelve la solicitud actualizada y la reemplaza en el store.
+// del trabajador y del técnico. Cada operación devuelve la solicitud actualizada y la reemplaza en el store.
 let solicitudes: SolicitudServicio[] = [];
 const listeners = new Set<() => void>();
 

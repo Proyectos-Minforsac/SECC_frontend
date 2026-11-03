@@ -32,7 +32,7 @@ export default function FinalizarEtapaModal({
         <p className="text-sm text-white">
           ¿Finalizar la etapa "{etapa}"? No se podrán agregar más visitas a esta etapa.
         </p>
-        <p className="text-xs text-slate-300">
+        <p className="text-sm text-slate-300">
           Se habilitarán {etapasHabilitadas.map((e) => `"${e}"`).join(' y ')} para el técnico.
         </p>
 

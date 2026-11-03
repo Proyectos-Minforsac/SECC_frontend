@@ -267,7 +267,7 @@ export const CotizacionDocument = ({ data }: CotizacionDocumentProps) => {
             </View>
             <View style={styles.rowDetail}>
               <Text style={styles.label}>SOLICITANTE:</Text>
-              <Text style={styles.value}>{data?.solicitante || 'Empleado N°3'}</Text>
+              <Text style={styles.value}>{data?.solicitante || 'Trabajador N°3'}</Text>
             </View>
             <View style={styles.rowDetail}>
               <Text style={styles.label}>MONEDA:</Text>

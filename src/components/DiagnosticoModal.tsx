@@ -117,7 +117,7 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
             {componentes.map((nombre, indice) => (
               <li
                 key={`${nombre}-${indice}`}
-                className="flex items-center gap-1.5 bg-white rounded-full pl-3 pr-2 py-1 text-xs text-black shadow-sm"
+                className="flex items-center gap-1.5 bg-white rounded-full pl-3 pr-2 py-1 text-sm text-black shadow-sm"
               >
                 {nombre}
                 <button
@@ -141,7 +141,7 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
           onChange={agregarImagenes}
           className="w-full bg-white rounded-full text-sm text-gray-800 shadow-sm cursor-pointer outline-none
              file:mr-4 file:py-2.5 file:px-6 file:rounded-full file:border-0
-             file:text-xs file:font-semibold file:bg-gray-900 file:text-white
+             file:text-sm file:font-semibold file:bg-gray-900 file:text-white
              hover:file:bg-black file:cursor-pointer transition-colors"
         />
         {evidencias.length > 0 && (

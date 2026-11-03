@@ -1,3 +1,7 @@
+import { pedir } from './http';
+import type { Cliente } from './clientes';
+import type { EstimacionPayload } from './calculoCostos';
+
 export interface DetalleImpresora {
   fecha: string;
   tienda: string;
@@ -16,6 +20,8 @@ export interface CotizacionItem {
   cantidad: number;
   precio: number;
   total: number;
+  // Costo de compra por unidad (uso interno, no se imprime). Solo en Producto, Impresora y Alquiler.
+  costoUnitario?: number;
   detalleImpresora?: DetalleImpresora;
 }
 
@@ -23,7 +29,7 @@ export interface CotizacionData {
   cliente: string;
   ruc: string;
   direccion: string;
-  // Correo del cliente (registrado en Clientes) para que el empleado la envíe manualmente.
+  // Correo del cliente (registrado en Clientes) para que el trabajador la envíe manualmente.
   correo?: string;
   fecha: string;
   solicitante: string;
@@ -35,20 +41,6 @@ export interface CotizacionData {
   items: CotizacionItem[];
 }
 
-// --- Inductores de costo (uso interno: no se imprimen en el PDF del cliente) ---
-
-// Categorías fijas de gastos logísticos que arman el costo interno del servicio.
-export const CATEGORIAS_COSTO = ['Alimentación', 'Hospedaje', 'Transporte', 'Horas-hombre'] as const;
-export type CategoriaCosto = typeof CATEGORIAS_COSTO[number];
-
-export interface CostoInductor {
-  categoria: CategoriaCosto;
-  descripcion: string;
-  cantidad: number;
-  costoUnitario: number;
-  subtotal: number;
-}
-
 // --- Payload que espera POST /api/cotizaciones ---
 
 export interface CrearCotizacionItem {
@@ -57,6 +49,8 @@ export interface CrearCotizacionItem {
   descripcion: string;
   cantidad: number;
   precioUnitario: number;
+  // Costo de compra por unidad (uso interno): obligatorio en Producto e Impresora.
+  costoUnitario?: number;
   orden: number;
   detalleImpresora?: DetalleImpresora;
 }
@@ -71,8 +65,45 @@ export interface CrearCotizacionPayload {
   // Solicitud de servicio de origen (si la cotización nace de una notificación de
   // diagnóstico completado); permite activar la visita técnica al aceptarla.
   solicitudId?: number;
+  // Garantía del servicio en meses (4 a 6). El servicio la hereda al aceptarse la cotización.
+  garantiaMeses?: number;
   items: CrearCotizacionItem[];
-  costos?: Omit<CostoInductor, 'subtotal'>[];
+  // Estimación de costos (uso interno): obligatoria. El servidor la recalcula con las tarifas vigentes.
+  estimacion: EstimacionPayload;
+  // Solo si la crea el jefe (queda validada): por qué acepta un margen bajo el mínimo.
+  justificacion?: string;
+}
+
+// Lo que se envía para corregir una cotización devuelta: lo mismo, salvo el cliente y la solicitud, que no cambian.
+export type CorregirCotizacionPayload = Pick<
+  CrearCotizacionPayload,
+  'solicitante' | 'moneda' | 'garantiaMeses' | 'items' | 'estimacion' | 'justificacion'
+>;
+
+// Estado de la estimación de una cotización frente al jefe. Las cotizaciones anteriores al control de costos no tienen.
+export type EstadoValidacion = 'EN REVISIÓN' | 'VALIDADA' | 'DEVUELTA';
+
+export const ESTILO_ESTADO_VALIDACION: Record<EstadoValidacion, string> = {
+  'EN REVISIÓN': 'bg-amber-100 text-amber-700 border-amber-300/60',
+  'VALIDADA': 'bg-emerald-100 text-emerald-700 border-emerald-300/60',
+  'DEVUELTA': 'bg-rose-100 text-rose-700 border-rose-300/60',
+};
+
+// Resumen de la estimación que guardó el servidor.
+export interface EstimacionGuardada {
+  estimacionId: number;
+  // 1 al crear la cotización; sube cada vez que se corrige y se reenvía.
+  version: number;
+  estado: EstadoValidacion;
+  destino: string;
+  viaticos: number;
+  manoObra: number;
+  materiales: number;
+  diagnostico: number;
+  imprevistos: number;
+  costoTotal: number;
+  ventaSoles: number;
+  margen: number | null;
 }
 
 export interface CotizacionCreada {
@@ -100,8 +131,7 @@ export interface CotizacionCreada {
     esTitulo: boolean;
     detalleImpresora: (DetalleImpresora & { detalleImpresoraId: number; itemCotizacionId: number }) | null;
   }>;
-  costos: Array<CostoInductor & { inductorCostoId: number; cotizacionId: number }>;
-  costoInternoTotal: number;
+  estimacion: EstimacionGuardada;
 }
 
 // --- Listado de cotizaciones (tabla general) ---
@@ -121,6 +151,11 @@ export interface CotizacionListada {
   subtotal: number;
   igv: number;
   total: number;
+  // Estimación vigente: vacío en las cotizaciones anteriores al control de costos (que no pasan por validación).
+  estimacionId: number | null;
+  validacionEstado: EstadoValidacion | '';
+  // Margen estimado (o el que dejó el jefe al ajustar), en %. Es de uso interno.
+  margen: number | null;
 }
 
 export interface CotizacionesPaginadas {
@@ -137,26 +172,53 @@ export const ESTILO_ESTADO_COTIZACION: Record<EstadoCotizacion, string> = {
   'RECHAZADA': 'bg-rose-100 text-rose-700 border-rose-300/60',
 };
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
+// Las cotizaciones llevan costos internos: todas las llamadas pasan por `pedir`, que identifica a quien las hace.
+export const crearCotizacion = (payload: CrearCotizacionPayload) =>
+  pedir<CotizacionCreada>('/cotizaciones', 'POST', payload, 'No se pudo guardar la cotización');
 
-export async function crearCotizacion(
-  payload: CrearCotizacionPayload
-): Promise<CotizacionCreada> {
-  const response = await fetch(`${apiBaseUrl}/cotizaciones`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+// Corrige una cotización devuelta: reemplaza sus ítems y vuelve a enviar la estimación al jefe.
+export const corregirCotizacion = (cotizacionId: number, payload: CorregirCotizacionPayload) =>
+  pedir<CotizacionCreada>(`/cotizaciones/${cotizacionId}`, 'PUT', payload, 'No se pudo guardar la cotización corregida');
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'No se pudo guardar la cotización');
-  }
-
-  return response.json();
+// Todo lo necesario para reabrir una cotización devuelta en el formulario.
+export interface CotizacionParaEdicion {
+  cotizacionId: number;
+  numeroCotizacion: string;
+  clienteId: number;
+  cliente: Cliente | null;
+  solicitante: string;
+  moneda: string;
+  garantiaMeses: number | null;
+  solicitudId: number | null;
+  items: Array<{
+    tipo: string;
+    nombre: string;
+    descripcion: string;
+    cantidad: number;
+    precioUnitario: number;
+    costoUnitario: number | null;
+    detalleImpresora: DetalleImpresora | null;
+  }>;
+  // Lo que se ingresó en la estimación (tal como lo guardó el servidor).
+  estimacion: {
+    estimacionId: number;
+    version: number;
+    entradas: {
+      destino: string;
+      tipoCambio: number;
+      actividades: EstimacionPayload['actividades'];
+    } | null;
+  };
+  // Por qué el jefe la devolvió.
+  devolucion: { usuario: string; fecha: string; motivo: string } | null;
 }
+
+export const obtenerCotizacionParaEdicion = (cotizacionId: number) =>
+  pedir<CotizacionParaEdicion>(`/cotizaciones/${cotizacionId}/edicion`, 'GET', undefined, 'No se pudo cargar la cotización devuelta');
+
+// Cotización lista para su PDF. El servidor la entrega solo si el jefe la validó.
+export const obtenerCotizacion = (cotizacionId: number) =>
+  pedir<CotizacionDeSolicitud>(`/cotizaciones/${cotizacionId}`, 'GET', undefined, 'No se pudo cargar la cotización');
 
 export async function obtenerCotizaciones(
   page: number = 1,
@@ -174,36 +236,17 @@ export async function obtenerCotizaciones(
     params.set('estado', estado);
   }
 
-  const response = await fetch(`${apiBaseUrl}/cotizaciones?${params.toString()}`);
-
-  if (!response.ok) {
-    throw new Error('No se pudieron cargar las cotizaciones');
-  }
-
-  return response.json();
+  return pedir<CotizacionesPaginadas>(`/cotizaciones?${params.toString()}`, 'GET', undefined, 'No se pudieron cargar las cotizaciones');
 }
 
 // El motivo es obligatorio al rechazar y se ignora al aceptar.
-export async function actualizarEstadoCotizacion(
-  cotizacionId: number,
-  estado: EstadoCotizacion,
-  motivo?: string
-): Promise<CotizacionListada> {
-  const response = await fetch(`${apiBaseUrl}/cotizaciones/${cotizacionId}/estado`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ estado, motivo }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'No se pudo actualizar la cotización');
-  }
-
-  return response.json();
-}
+export const actualizarEstadoCotizacion = (cotizacionId: number, estado: EstadoCotizacion, motivo?: string) =>
+  pedir<CotizacionListada>(
+    `/cotizaciones/${cotizacionId}/estado`,
+    'PATCH',
+    { estado, motivo },
+    'No se pudo actualizar la cotización'
+  );
 
 
 // Cotización completa (cliente + ítems) tal como la devuelve GET /api/cotizaciones/solicitud/:id
@@ -228,15 +271,13 @@ export interface CotizacionDeSolicitud {
   }>;
 }
 
-export async function obtenerCotizacionesDeSolicitud(solicitudId: number): Promise<CotizacionDeSolicitud[]> {
-  const response = await fetch(`${apiBaseUrl}/cotizaciones/solicitud/${solicitudId}`);
-
-  if (!response.ok) {
-    throw new Error('No se pudieron cargar las cotizaciones del servicio');
-  }
-
-  return response.json();
-}
+export const obtenerCotizacionesDeSolicitud = (solicitudId: number) =>
+  pedir<CotizacionDeSolicitud[]>(
+    `/cotizaciones/solicitud/${solicitudId}`,
+    'GET',
+    undefined,
+    'No se pudieron cargar las cotizaciones del servicio'
+  );
 
 // Datos para dibujar el PDF de la cotización (el mismo documento que se envía al cliente).
 export const aDatosCotizacion = (c: CotizacionDeSolicitud): CotizacionData => ({

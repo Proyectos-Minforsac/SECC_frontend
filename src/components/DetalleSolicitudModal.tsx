@@ -37,6 +37,7 @@ export default function DetalleSolicitudModal({ solicitud, onClose }: DetalleSol
 
           <section className="bg-white rounded-2xl px-5 py-3 shadow-sm flex flex-col gap-2">
             <h4 className="font-semibold text-[#222861]">Servicio</h4>
+            <Dato etiqueta="Tipo de servicio" valor={solicitud.tipoServicio} />
             <Dato etiqueta="Descripción del servicio" valor={solicitud.descripcion} />
             <Dato etiqueta="Instrucciones para la visita" valor={autorizacion?.instrucciones} />
           </section>

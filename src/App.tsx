@@ -14,6 +14,10 @@ import NotificacionesScreen from './pages/NotificacionesScreen';
 import SolicitudesServicioScreen from './pages/SolicitudesServicioScreen';
 import SolicitudesTecnicoScreen from './pages/SolicitudesTecnicoScreen';
 import VisitasTecnicoScreen from './pages/VisitasTecnicoScreen';
+import TarifarioScreen from './pages/TarifarioScreen';
+import ValidacionesScreen from './pages/ValidacionesScreen';
+import ValidacionDetalleScreen from './pages/ValidacionDetalleScreen';
+import RentabilidadScreen from './pages/RentabilidadScreen';
 import Layout from './components/Layout';
 import RutaProtegida from './components/RutaProtegida';
 
@@ -25,19 +29,30 @@ function App() {
         {/* Pantalla inicial (Login) */}
         <Route path="/" element={<LoginScreen />} />
 
-        {/* Rutas del empleado */}
-        <Route element={<RutaProtegida rol="empleado" />}>
+        {/* Rutas del trabajador (el jefe hace el mismo trabajo) */}
+        <Route element={<RutaProtegida rol={["trabajador", "jefe"]} />}>
           <Route element={<Layout />}>
             <Route path="/clientes" element={<ClientesScreen />} />
             <Route path='/tecnicos' element={<TecnicosScreen />}/>
             <Route path='/solicitudes-servicio' element={<SolicitudesServicioScreen />} />
             <Route path='/servicios' element={<ServiciosScreen />} />
             <Route path="/cotizaciones" element={<CotizacionesScreen />} />
-            <Route path="/cotizaciones/nueva" element={<NuevaCotizacionScreen />} />
-            <Route path="/cotizacion-pdf" element={<CotizacionPdfScreen/>}/>
+            <Route path="/cotizaciones/nueva" element={<NuevaCotizacionScreen key="nueva" />} />
+            <Route path="/cotizaciones/:cotizacionId/editar" element={<NuevaCotizacionScreen key="editar" />} />
+            <Route path="/cotizaciones/:cotizacionId/pdf" element={<CotizacionPdfScreen/>}/>
             <Route path="/cotizacion-pdf/prueba" element={<CotizacionPDFPruebaScreen />} />
             <Route path="/conformidad-pdf/prueba" element={<ConformidadPDFPruebaScreen />} />
             <Route path="/visitas-tecnicas" element={<VisitasTecnicasScreen />}/>
+          </Route>
+        </Route>
+
+        {/* Rutas solo del jefe */}
+        <Route element={<RutaProtegida rol="jefe" />}>
+          <Route element={<Layout />}>
+            <Route path="/tarifario" element={<TarifarioScreen />} />
+            <Route path="/validaciones" element={<ValidacionesScreen />} />
+            <Route path="/validaciones/:cotizacionId" element={<ValidacionDetalleScreen />} />
+            <Route path="/rentabilidad" element={<RentabilidadScreen />} />
           </Route>
         </Route>
 
@@ -49,8 +64,8 @@ function App() {
           </Route>
         </Route>
 
-        {/* Rutas compartidas (empleado y técnico) */}
-        <Route element={<RutaProtegida rol={["empleado", "tecnico"]} />}>
+        {/* Rutas compartidas (trabajador, jefe y técnico) */}
+        <Route element={<RutaProtegida rol={["trabajador", "jefe", "tecnico"]} />}>
           <Route element={<Layout />}>
             <Route path="/notificaciones" element={<NotificacionesScreen />} />
           </Route>

@@ -8,6 +8,7 @@ import AvanceVisitaModal from "../components/AvanceVisitaModal"
 import AvanceVisitaDetalle from "../components/AvanceVisitaDetalle"
 import Toast from "../components/Toast"
 import { agregarNotificacion } from "../services/notificaciones"
+import { CONCEPTOS_IMPREVISTO } from "../services/costosReales"
 import {
   formatearFechaISO,
   guardarAvanceVisitaProgramada,
@@ -59,14 +60,20 @@ export default function VisitasTecnicoScreen() {
       setGuardando(false);
     }
 
+    const visitaCompletada = `${tecnicoNombre} completó exitosamente la visita del ${formatearFechaISO(visitaProgramadaAvance.fecha)} a ${servicioAvance.clienteNombre}.`
+    const imprevisto = avance.imprevisto
     agregarNotificacion({
-      rolDestino: 'empleado',
+      rolDestino: 'trabajador',
       solicitudId: servicioAvance.solicitudId,
-      mensaje: `${tecnicoNombre} completó exitosamente la visita del ${formatearFechaISO(visitaProgramadaAvance.fecha)} a ${servicioAvance.clienteNombre}.`,
+      // Con un imprevisto, el aviso lleva a Visitas Técnicas para ponerle el monto
+      ...(imprevisto ? { tipo: 'IMPREVISTO_AVISADO' as const } : {}),
+      mensaje: imprevisto
+        ? `${visitaCompletada} Avisó un imprevisto (${CONCEPTOS_IMPREVISTO.find((c) => c.clave === imprevisto.concepto)?.etiqueta ?? imprevisto.concepto}): ${imprevisto.descripcion} Registra su monto en Visitas Técnicas.`
+        : visitaCompletada,
     });
 
     setAvanceVisitaId(null);
-    setToast({ show: true, type: "success", message: "La visita se completó y se notificó al empleado." });
+    setToast({ show: true, type: "success", message: "La visita se completó y se notificó al trabajador." });
   }
 
   const handleGuardarDiagnostico = async (diagnostico: DiagnosticoVisita) => {
@@ -82,7 +89,7 @@ export default function VisitasTecnicoScreen() {
     }
 
     agregarNotificacion({
-      rolDestino: 'empleado',
+      rolDestino: 'trabajador',
       tipo: 'DIAGNOSTICO_COMPLETADO',
       solicitudId: visitaDiagnostico.solicitudId,
       mensaje: `${tecnicoNombre} completó el diagnóstico inicial de ${visitaDiagnostico.clienteNombre}.`,
@@ -132,7 +139,7 @@ export default function VisitasTecnicoScreen() {
                         <li className="px-5 py-3 bg-rose-50 text-sm text-rose-800">
                           <p className="font-semibold">Servicio cancelado: no se llegó a un acuerdo con el cliente.</p>
                           <p className="mt-0.5">Motivo: {visita.cancelacion.motivo}</p>
-                          <p className="mt-0.5 text-xs text-rose-600">{formatearFechaHora(visita.cancelacion.fecha)}</p>
+                          <p className="mt-0.5 text-sm text-rose-600">{formatearFechaHora(visita.cancelacion.fecha)}</p>
                         </li>
                       )}
                       {ETAPAS_SERVICIO.map((etapa, indice) => {
@@ -142,7 +149,7 @@ export default function VisitasTecnicoScreen() {
                         const esDiagnostico = indice === 0;
                         const esInstalacion = indice === 1;
                         const tipo = tipoDeEtapa(indice);
-                        // Habilitada = completada o activa; las demás se ven bloqueadas hasta que el empleado
+                        // Habilitada = completada o activa; las demás se ven bloqueadas hasta que el trabajador
                         // finalice la etapa que las habilita. Solo las etapas activas admiten ingreso de datos
                         // (el mantenimiento y el soporte se activan a la vez al finalizar la instalación).
                         const habilitada = estado !== "bloqueada";
@@ -161,7 +168,7 @@ export default function VisitasTecnicoScreen() {
                                   <Lock size={14} className="text-slate-400" />
                                 )}
                                 <span className="font-medium text-slate-800">{etapa}</span>
-                                <span className="text-xs text-slate-400">
+                                <span className="text-sm text-slate-400">
                                   {completada
                                     ? "Completada"
                                     : activa
@@ -179,7 +186,7 @@ export default function VisitasTecnicoScreen() {
                               {activa && esDiagnostico && (
                                 <button
                                   onClick={() => setDiagnosticoVisitaId(visita.visitaId)}
-                                  className="px-4 py-1 bg-[#2A317A] text-white text-xs font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer"
+                                  className="px-4 py-1 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer"
                                 >
                                   Agregar
                                 </button>
@@ -200,7 +207,7 @@ export default function VisitasTecnicoScreen() {
                                         {vp.avance ? (
                                           <span className="text-[10px] font-bold tracking-wider text-emerald-700">COMPLETADA</span>
                                         ) : esActual ? (
-                                          <span className="px-3 py-0.5 bg-[#2A317A] text-white text-xs font-medium rounded-full">
+                                          <span className="px-3 py-0.5 bg-[#2A317A] text-white text-sm font-medium rounded-full">
                                             Registrar avance
                                           </span>
                                         ) : (

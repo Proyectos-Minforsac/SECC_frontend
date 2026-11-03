@@ -52,7 +52,7 @@ export default function RechazarCotizacionModal({
           className="w-full h-28 bg-white rounded-2xl p-4 text-black placeholder-gray-500 text-sm outline-none resize-none shadow-sm"
         />
 
-        <p className="text-xs text-slate-300">
+        <p className="text-sm text-slate-300">
           El servicio se cancelará porque no se llegó a un acuerdo con el cliente, y se avisará al técnico.
         </p>
 

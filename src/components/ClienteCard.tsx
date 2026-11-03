@@ -15,13 +15,13 @@ export default function ClienteCard({ nombre, direccion, ruc, correo_electronico
         <div className="bg-[#222861] p-4 flex justify-end gap-2">
           <button
             onClick={on_edit}
-            className="bg-[#E2E4E9] text-gray-800 text-xs font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
+            className="bg-[#E2E4E9] text-gray-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
             Editar
           </button>
 
           <button
             onClick={on_delete}
-            className="bg-[#E2E4E9] text-gray-800 text-xs font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
+            className="bg-[#E2E4E9] text-gray-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
             Eliminar
           </button>
         </div>

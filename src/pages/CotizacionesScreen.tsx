@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import CotizacionesTable, { type ActualizacionCotizacion } from '../components/CotizacionesTable';
 import PaginacionComponente from '../components/Paginacion';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -11,8 +12,19 @@ import {
 } from '../services/cotizaciones';
 import { activarVisitaPorSolicitud, cancelarVisitaPorSolicitud } from '../services/visitas';
 import { agregarNotificacion } from '../services/notificaciones';
+import { useAuth } from '../context/AuthContext';
+
+// Aviso que puede traer la navegación al volver de guardar una cotización (se muestra una sola vez).
+interface CotizacionesState {
+  aviso?: { title: string; message: string };
+}
 
 export const CotizacionesScreen = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { usuario } = useAuth();
+  const aviso = (location.state as CotizacionesState | null)?.aviso;
+
   // Tabla general de cotizaciones (pendientes, aceptadas y rechazadas)
   const [cotizaciones, setCotizaciones] = useState<CotizacionListada[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -22,9 +34,10 @@ export const CotizacionesScreen = () => {
   // Cotización cuyo rechazo se está confirmando en el modal del motivo
   const [cotizacionARechazar, setCotizacionARechazar] = useState<CotizacionListada | null>(null);
   const [toast, setToast] = useState<{ show: boolean; type: 'success' | 'error'; title?: string; message: string }>({
-    show: false,
+    show: Boolean(aviso),
     type: 'success',
-    message: '',
+    title: aviso?.title,
+    message: aviso?.message ?? '',
   });
 
   const cargarCotizaciones = async (pagina: number = paginaActual) => {
@@ -146,6 +159,10 @@ export const CotizacionesScreen = () => {
               actualizando={actualizandoEstado}
               onAceptar={handleAceptarCotizacion}
               onRechazar={(id) => setCotizacionARechazar(cotizaciones.find((c) => c.cotizacionId === id) ?? null)}
+              esJefe={usuario?.rol === 'jefe'}
+              onVerPdf={(id) => navigate(`/cotizaciones/${id}/pdf`)}
+              onCorregir={(id) => navigate(`/cotizaciones/${id}/editar`)}
+              onRevisar={(id) => navigate(`/validaciones/${id}`)}
             />
           )}
         </div>

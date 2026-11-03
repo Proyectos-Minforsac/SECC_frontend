@@ -113,7 +113,7 @@ export default function DetalleVisitaPanel({ detalle, cliente, onCerrar }: Detal
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-800 truncate">{documento.nombre}</p>
-                    <p className="text-xs text-slate-500">{formatearFechaHora(documento.subidoEn)}</p>
+                    <p className="text-sm text-slate-500">{formatearFechaHora(documento.subidoEn)}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     {visualizable && (
@@ -157,13 +157,13 @@ export default function DetalleVisitaPanel({ detalle, cliente, onCerrar }: Detal
           {enviando ? 'Generando y enviando…' : conformidadEnviada ? 'Reenviar documento de conformidad' : 'Generar documento de conformidad'}
         </button>
         {!detalle.reporteEnviado && (
-          <p className="text-xs text-slate-500">Se habilita cuando el técnico envíe el reporte de esta visita.</p>
+          <p className="text-sm text-slate-500">Se habilita cuando el técnico envíe el reporte de esta visita.</p>
         )}
         {detalle.reporteEnviado && correoCliente === '' && (
-          <p className="text-xs text-red-600">El cliente no tiene un correo electrónico registrado.</p>
+          <p className="text-sm text-red-600">El cliente no tiene un correo electrónico registrado.</p>
         )}
         {conformidadEnviada && (
-          <p className="flex items-center gap-1.5 text-xs text-emerald-700">
+          <p className="flex items-center gap-1.5 text-sm text-emerald-700">
             <CheckCircle2 size={14} />
             Enviado el {conformidadEnviada.enviadaEn} a {conformidadEnviada.correo}
           </p>

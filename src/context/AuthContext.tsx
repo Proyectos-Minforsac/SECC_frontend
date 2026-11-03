@@ -1,8 +1,11 @@
 import { createContext, useContext, useState, type ReactNode } from "react"
+import { borrarSesion, guardarSesion, leerSesion } from "../services/sesion"
 
-export type Rol = "empleado" | "tecnico"
+// El jefe hace el mismo trabajo que el trabajador y, además, administra las tarifas y valida las estimaciones de costos.
+export type Rol = "trabajador" | "jefe" | "tecnico"
 
 export interface Usuario {
+  usuarioId: number
   nombre: string
   rol: Rol
 }
@@ -13,34 +16,24 @@ interface AuthContextValue {
   cerrarSesion: () => void
 }
 
-const STORAGE_KEY = "secc_usuario"
-
 export const RUTA_INICIO: Record<Rol, string> = {
-  empleado: "/solicitudes-servicio",
+  trabajador: "/solicitudes-servicio",
+  jefe: "/solicitudes-servicio",
   tecnico: "/solicitudes-tecnico",
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const leerUsuarioGuardado = (): Usuario | null => {
-  try {
-    const guardado = localStorage.getItem(STORAGE_KEY)
-    return guardado ? (JSON.parse(guardado) as Usuario) : null
-  } catch {
-    return null
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuario] = useState<Usuario | null>(leerUsuarioGuardado)
+  const [usuario, setUsuario] = useState<Usuario | null>(leerSesion)
 
   const iniciarSesion = (nuevoUsuario: Usuario) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevoUsuario))
+    guardarSesion(nuevoUsuario)
     setUsuario(nuevoUsuario)
   }
 
   const cerrarSesion = () => {
-    localStorage.removeItem(STORAGE_KEY)
+    borrarSesion()
     setUsuario(null)
   }
 

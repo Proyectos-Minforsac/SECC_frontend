@@ -34,13 +34,13 @@ export default function DocumentoVisorModal({ documento, onClose }: DocumentoVis
         <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-slate-100">
           <div className="min-w-0">
             <p className="font-semibold text-slate-800 truncate">{documento.nombre}</p>
-            <p className="text-xs text-slate-500">Subido el {formatearFechaHora(documento.subidoEn)}</p>
+            <p className="text-sm text-slate-500">Subido el {formatearFechaHora(documento.subidoEn)}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <a
               href={documento.url}
               download={documento.nombre}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#2A317A] text-white text-xs font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm"
             >
               <Download size={14} />
               Descargar

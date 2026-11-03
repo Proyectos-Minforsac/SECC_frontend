@@ -19,7 +19,11 @@ export interface Tecnico {
   precios: PrecioAire[],
 }
 
-export type NuevoTecnico = Omit<Tecnico, 'tecnicoId' | 'precios'> & {
+// El servicio del técnico se escribe en un select, pero se compara sin distinguir mayúsculas ni espacios sobrantes.
+export const ofreceServicio = (tecnico: Tecnico, tipoServicio: string) =>
+  tecnico.servicio.trim().toLowerCase() === tipoServicio.trim().toLowerCase();
+
+export type NuevoTecnico =Omit<Tecnico, 'tecnicoId' | 'precios'> & {
   precios?: NuevoPrecioAire[],
 }
 

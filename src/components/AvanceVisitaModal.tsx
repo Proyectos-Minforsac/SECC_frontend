@@ -3,6 +3,7 @@ import { FileText, X } from 'lucide-react';
 import AgregarEditarModal from './Modal';
 import type { EvidenciaVisita } from '../services/visitas';
 import type { AvanceVisita } from '../services/visitasProgramadas';
+import { CONCEPTOS_IMPREVISTO, type ConceptoImprevisto } from '../services/costosReales';
 
 interface AvanceVisitaModalProps {
   isOpen: boolean;
@@ -18,12 +19,19 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
   const [descripcion, setDescripcion] = useState('');
   const [evidencias, setEvidencias] = useState<EvidenciaVisita[]>([]);
   const [error, setError] = useState('');
+  // Aviso de imprevisto (opcional): qué pasó; el monto lo registra después el trabajador
+  const [hayImprevisto, setHayImprevisto] = useState(false);
+  const [concepto, setConcepto] = useState<ConceptoImprevisto>('DOBLE_PASAJE');
+  const [descripcionImprevisto, setDescripcionImprevisto] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setDescripcion('');
       setEvidencias([]);
       setError('');
+      setHayImprevisto(false);
+      setConcepto('DOBLE_PASAJE');
+      setDescripcionImprevisto('');
     }
   }, [isOpen]);
 
@@ -57,8 +65,15 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
     e.preventDefault();
     if (guardando) return;
     if (!descripcion.trim()) return setError('Ingresa la descripción del avance del servicio.');
+    if (hayImprevisto && descripcionImprevisto.trim().length < 10) {
+      return setError('Cuenta qué pasó con el imprevisto (al menos 10 caracteres).');
+    }
 
-    onGuardar({ descripcion: descripcion.trim(), evidencias });
+    onGuardar({
+      descripcion: descripcion.trim(),
+      evidencias,
+      ...(hayImprevisto ? { imprevisto: { concepto, descripcion: descripcionImprevisto.trim() } } : {}),
+    });
   }
 
   return (
@@ -85,7 +100,7 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
           onChange={agregarArchivos}
           className="w-full bg-white rounded-full text-sm text-gray-800 shadow-sm cursor-pointer outline-none
              file:mr-4 file:py-2.5 file:px-6 file:rounded-full file:border-0
-             file:text-xs file:font-semibold file:bg-gray-900 file:text-white
+             file:text-sm file:font-semibold file:bg-gray-900 file:text-white
              hover:file:bg-black file:cursor-pointer transition-colors"
         />
         {evidencias.length > 0 && (
@@ -114,6 +129,36 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        <label className="flex items-center gap-2 text-white text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={hayImprevisto}
+            onChange={(e) => setHayImprevisto(e.target.checked)}
+            className="h-4 w-4 cursor-pointer"
+          />
+          Hubo un imprevisto en esta visita
+        </label>
+        {hayImprevisto && (
+          <div className="flex flex-col gap-2 rounded-2xl border border-white/20 p-3">
+            <select
+              value={concepto}
+              onChange={(e) => setConcepto(e.target.value as ConceptoImprevisto)}
+              aria-label="Tipo de imprevisto"
+              className="w-full h-10 bg-white rounded-full px-4 text-sm text-black shadow-sm outline-none cursor-pointer"
+            >
+              {CONCEPTOS_IMPREVISTO.map((c) => (
+                <option key={c.clave} value={c.clave}>{c.etiqueta}</option>
+              ))}
+            </select>
+            <textarea
+              placeholder="Qué ocurrió. El trabajador registrará el monto."
+              value={descripcionImprevisto}
+              onChange={(e) => setDescripcionImprevisto(e.target.value)}
+              className="w-full h-20 bg-white rounded-2xl p-3 text-black placeholder-gray-500 text-sm outline-none resize-none shadow-sm"
+            />
           </div>
         )}
 

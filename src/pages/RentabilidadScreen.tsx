@@ -37,14 +37,14 @@ interface CifraProps {
 function Cifra({ etiqueta, valor, detalle, destacada = false, insignia }: CifraProps) {
   return (
     <div className={`bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-1 ${destacada ? 'lg:col-span-2' : ''}`}>
-      <p className="text-xs text-slate-500">{etiqueta}</p>
+      <p className="text-sm text-slate-500">{etiqueta}</p>
       <p className={`font-semibold text-slate-900 ${destacada ? 'text-5xl' : 'text-2xl'}`}>{valor}</p>
       {insignia && (
         <span className={`self-start inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${insignia.estilo}`}>
           {insignia.texto}
         </span>
       )}
-      {detalle && <p className="text-xs text-slate-400">{detalle}</p>}
+      {detalle && <p className="text-sm text-slate-400">{detalle}</p>}
     </div>
   );
 }

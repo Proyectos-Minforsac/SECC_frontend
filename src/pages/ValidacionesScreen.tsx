@@ -132,7 +132,7 @@ export default function ValidacionesScreen() {
                         <td className="py-2.5 px-3.5 text-center">
                           <button
                             onClick={() => navigate(`/validaciones/${p.cotizacionId}`)}
-                            className="px-3 py-1 bg-[#2A317A] text-white text-xs font-medium rounded-full hover:bg-[#1C2257] transition-colors cursor-pointer"
+                            className="px-3 py-1 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-colors cursor-pointer"
                           >
                             Revisar
                           </button>
@@ -184,7 +184,7 @@ export default function ValidacionesScreen() {
                         <td className="py-2.5 px-3.5 text-center">
                           <button
                             onClick={() => navigate(`/validaciones/${d.cotizacionId}`)}
-                            className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-full hover:bg-slate-200 transition-colors cursor-pointer"
+                            className="px-3 py-1 bg-slate-100 text-slate-700 text-sm font-medium rounded-full hover:bg-slate-200 transition-colors cursor-pointer"
                           >
                             Ver
                           </button>

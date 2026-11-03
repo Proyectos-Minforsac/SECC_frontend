@@ -2,7 +2,7 @@ import { nombreDeTipo, ordenarEvidencias, type EvidenciaVisita, type VisitaTecni
 import { claveVisitaConformidad } from './conformidad';
 import { formatearFechaISO, ordenarPorFechaHora, type VisitaProgramada } from './visitasProgramadas';
 
-// Qué visita eligió el empleado dentro de las etapas de un servicio.
+// Qué visita eligió el trabajador dentro de las etapas de un servicio.
 export type SeleccionVisita =
   | { visitaId: number; tipo: 'diagnostico' }
   | { visitaId: number; tipo: 'programada'; visitaProgramadaId: number };

@@ -1,4 +1,5 @@
 import { pedir } from './http';
+import { cargarResumenCostos, type EtapaPayload } from './costosReales';
 
 export type EstadoVisita ='AUTORIZADA' | 'DIAGNÓSTICO COMPLETADO' | 'ACTIVO' | 'CANCELADA';
 
@@ -53,7 +54,7 @@ export interface DiagnosticoVisita {
   evidencias: EvidenciaVisita[];
 }
 
-// Se registra cuando el empleado cierra el servicio: toda su documentación queda en una carpeta de Drive.
+// Se registra cuando el trabajador cierra el servicio: toda su documentación queda en una carpeta de Drive.
 export interface CierreServicio {
   fecha: string;
   carpetaUrl: string;
@@ -71,13 +72,15 @@ export interface VisitaTecnica {
   solicitudId: number;
   clienteNombre: string;
   tecnicoNombre: string;
-  // Instrucciones escritas por el empleado para la primera visita técnica.
+  // Instrucciones escritas por el trabajador para la primera visita técnica.
   descripcion: string;
   fecha: string;
   estado: EstadoVisita;
-  // Etapas que el empleado dio por terminadas. Solo la instalación se finaliza, así que 1 o más significa
+  // Etapas que el trabajador dio por terminadas. Solo la instalación se finaliza, así que 1 o más significa
   // que ya está finalizada.
   etapasFinalizadas: number;
+  // Meses de garantía acordados en la cotización aceptada (4 a 6). Cuenta desde la última visita de instalación.
+  garantiaMeses: number;
   diagnostico?: DiagnosticoVisita;
   cierre?: CierreServicio;
   cancelacion?: CancelacionServicio;
@@ -98,7 +101,7 @@ export type EstadoEtapa = 'completada' | 'activa' | 'bloqueada';
 
 // Estado de la etapa `indice` (posición en ETAPAS_SERVICIO):
 // - Diagnóstico: activa hasta que el técnico envía el diagnóstico.
-// - Instalación: bloqueada hasta que el empleado registre la aceptación de la cotización y active el
+// - Instalación: bloqueada hasta que el trabajador registre la aceptación de la cotización y active el
 //   servicio; activa hasta que la finalice.
 // - Mantenimiento preventivo y soporte técnico: bloqueados hasta que se finalice la instalación; luego
 //   quedan activos a la vez hasta que se cierre el servicio (no se finalizan por separado).
@@ -111,7 +114,7 @@ export const estadoEtapa = (visita: VisitaTecnica, indice: number): EstadoEtapa 
   return visita.cierre ? 'completada' : 'activa';
 }
 
-// Las visitas se cargan del backend y se guardan aquí para compartirlas entre las pantallas del empleado
+// Las visitas se cargan del backend y se guardan aquí para compartirlas entre las pantallas del trabajador
 // y del técnico. La visita la crea el backend al autorizar el viaje; cada operación devuelve la visita
 // actualizada y la reemplaza en el store.
 let visitas: VisitaTecnica[] = [];
@@ -190,9 +193,16 @@ export const cancelarVisitaPorSolicitud = async (solicitudId: number, motivo: st
   return visita ? guardarVisita(visita) : null;
 }
 
-// El empleado da por terminada la etapa en curso y habilita la siguiente para el técnico.
-export const finalizarEtapaServicio = async (visitaId: number) =>
-  guardarVisita(await pedir<VisitaTecnica>(`/visitas/${visitaId}/finalizar-etapa`, 'POST', {}, 'No se pudo finalizar la etapa'));
+// El trabajador da por terminada la etapa en curso y habilita la siguiente para el técnico. Si el servicio pasa por el
+// control de costos, se envían los costos reales de la etapa que confirmó (la liquidación); si no, el cuerpo va vacío.
+export const finalizarEtapaServicio = async (visitaId: number, etapas?: EtapaPayload[]) => {
+  const visita = guardarVisita(
+    await pedir<VisitaTecnica>(`/visitas/${visitaId}/finalizar-etapa`, 'POST', etapas ? { etapas } : {}, 'No se pudo finalizar la etapa')
+  );
+  // Los márgenes y el punto del control cambian al liquidar; si no se pueden actualizar ahora, se verán al recargar
+  if (etapas) await cargarResumenCostos().catch(() => undefined);
+  return visita;
+}
 
 export const registrarCierreServicio = async (visitaId: number, carpetaUrl: string) =>
   guardarVisita(await pedir<VisitaTecnica>(`/visitas/${visitaId}/cierre`, 'POST', { carpetaUrl }, 'No se pudo registrar el cierre del servicio'));

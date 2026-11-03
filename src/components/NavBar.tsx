@@ -1,15 +1,21 @@
 import { useEffect, useRef, useState } from "react"
-import { Bell, ChevronDown, LogOut } from "lucide-react"
+import { Bell, ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth, type Rol } from "../context/AuthContext"
 import { useNotificaciones } from "../hooks/useNotificaciones"
 
 const ETIQUETA_ROL: Record<Rol, string> = {
-  empleado: "Empleado",
+  trabajador: "Trabajador",
+  jefe: "Jefe",
   tecnico: "Técnico",
 }
 
-export default function NavBar() {
+interface NavBarProps {
+  menuContraido: boolean
+  onAlternarMenu: () => void
+}
+
+export default function NavBar({ menuContraido, onAlternarMenu }: NavBarProps) {
   const { usuario, cerrarSesion } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,6 +42,16 @@ export default function NavBar() {
 
   return (
     <header className="h-14 shrink-0 bg-[#2A317A] shadow-sm flex items-center justify-end gap-3 px-8">
+      <button
+        onClick={onAlternarMenu}
+        aria-label={menuContraido ? "Expandir el menú" : "Contraer el menú"}
+        aria-expanded={!menuContraido}
+        title={menuContraido ? "Expandir el menú" : "Contraer el menú"}
+        className="mr-auto p-2 rounded-full transition-colors cursor-pointer hover:bg-white/10"
+      >
+        {menuContraido ? <PanelLeftOpen size={20} className="text-white" /> : <PanelLeftClose size={20} className="text-white" />}
+      </button>
+
       <button
         onClick={() => navigate("/notificaciones")}
         aria-label="Notificaciones"

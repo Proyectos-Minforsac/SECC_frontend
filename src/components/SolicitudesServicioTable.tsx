@@ -37,6 +37,7 @@ export default function SolicitudesServicioTable({
             <th className="py-3 px-3.5 text-center">N°</th>
             <th className="py-3 px-3.5">Cliente</th>
             <th className="py-3 px-3.5">Descripción</th>
+            <th className="py-3 px-3.5">Servicio</th>
             <th className="py-3 px-3.5 text-center">Fecha</th>
             <th className="py-3 px-3.5">Enviada a</th>
             <th className="py-3 px-3.5">Técnicos que respondieron</th>
@@ -54,6 +55,9 @@ export default function SolicitudesServicioTable({
                 <td className="py-2.5 px-3.5 font-medium text-slate-500 text-center">{solicitud.solicitudId}</td>
                 <td className="py-2.5 px-3.5 font-semibold text-slate-800">{solicitud.clienteNombre}</td>
                 <td className="py-2.5 px-3.5 text-slate-600">{solicitud.descripcion}</td>
+                <td className="py-2.5 px-3.5 text-slate-700">
+                  {solicitud.tipoServicio || <span className="text-slate-400">—</span>}
+                </td>
                 <td className="py-2.5 px-3.5 text-center whitespace-nowrap">{solicitud.fecha}</td>
                 <td className="py-2.5 px-3.5 text-slate-700">{solicitud.tecnicos.join(', ')}</td>
                 <td className="py-2.5 px-3.5 text-slate-700 min-w-60">
@@ -72,7 +76,7 @@ export default function SolicitudesServicioTable({
                       {solicitud.ofertas.length > MAX_OFERTAS_VISIBLES && (
                         <button
                           onClick={() => setSolicitudModalId(solicitud.solicitudId)}
-                          className="text-blue-600 hover:text-blue-800 underline text-xs font-medium text-left cursor-pointer"
+                          className="text-blue-600 hover:text-blue-800 underline text-sm font-medium text-left cursor-pointer"
                         >
                           Ver todas las ofertas ({solicitud.ofertas.length})
                         </button>
@@ -93,13 +97,13 @@ export default function SolicitudesServicioTable({
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => onEditar(solicitud)}
-                        className="px-4 py-1 bg-[#2A317A] text-white text-xs font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer"
+                        className="px-4 py-1 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-colors shadow-sm cursor-pointer"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => onEliminar(solicitud)}
-                        className="px-4 py-1 bg-white text-red-600 border border-red-300 text-xs font-medium rounded-full hover:bg-red-50 transition-colors shadow-sm cursor-pointer"
+                        className="px-4 py-1 bg-white text-red-600 border border-red-300 text-sm font-medium rounded-full hover:bg-red-50 transition-colors shadow-sm cursor-pointer"
                       >
                         Eliminar
                       </button>
@@ -110,7 +114,7 @@ export default function SolicitudesServicioTable({
             ))
           ) : (
             <tr>
-              <td colSpan={8} className="py-6 text-center text-slate-400">
+              <td colSpan={9} className="py-6 text-center text-slate-400">
                 No hay solicitudes de servicio.
               </td>
             </tr>

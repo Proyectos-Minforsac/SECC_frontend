@@ -2,8 +2,16 @@ import type { Rol } from "../context/AuthContext";
 import { pedir } from "./http";
 
 // Notificaciones que además de mostrarse, habilitan una acción rápida en la pantalla
-// (p.ej. "Crear cotización" cuando el técnico completa el diagnóstico inicial).
-export type TipoNotificacion = 'DIAGNOSTICO_COMPLETADO';
+// (p.ej. "Crear cotización" cuando el técnico completa el diagnóstico inicial; "Registrar monto" cuando avisa un imprevisto;
+// "Ir al historial" cuando termina la garantía de un servicio). Los tres últimos los crea el servidor en la validación del
+// jefe y llevan a la cotización: "Revisar", "Corregir" y "Ver PDF".
+export type TipoNotificacion =
+  | 'DIAGNOSTICO_COMPLETADO'
+  | 'IMPREVISTO_AVISADO'
+  | 'GARANTIA_VENCIDA'
+  | 'VALIDACION_PENDIENTE'
+  | 'COTIZACION_DEVUELTA'
+  | 'COTIZACION_VALIDADA';
 
 export interface Notificacion {
   notificacionId: number;
@@ -16,6 +24,8 @@ export interface Notificacion {
   fecha: string;
   leida: boolean;
   solicitudId: number;
+  // Cotización a la que lleva el aviso (solo en los de la validación).
+  cotizacionId?: number;
 }
 
 export type NuevaNotificacion = Omit<Notificacion, "notificacionId" | "fecha" | "leida"> & {

@@ -1,28 +1,60 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Toast from "../components/Toast";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
 import CotizacionDocument from "../components/CotizacionReporte";
-import type { CotizacionData } from "../services/cotizaciones";
+import { aDatosCotizacion, obtenerCotizacion, type CotizacionData } from "../services/cotizaciones";
 import { ArrowLeft, Download, Mail } from "lucide-react";
 
+// PDF de una cotización que el jefe ya validó (o anterior al control de costos). Se abre por su id, así que se puede
+// volver a ver cuando se quiera; si todavía no está validada, el servidor no la entrega.
 export default function CotizacionPdfScreen() {
+     const { cotizacionId } = useParams();
      const { state } = useLocation();
      const navigate = useNavigate();
-     const data = state?.data as CotizacionData | undefined;
 
-     // NuevaCotizacionScreen avisa con este indicador que la cotización se acaba de guardar
+     const [data, setData] = useState<CotizacionData | null>(null);
+     const [cargando, setCargando] = useState(true);
+     const [error, setError] = useState('');
+
+     // NuevaCotizacionScreen avisa con este indicador que la cotización se acaba de guardar (solo ocurre si la crea el jefe,
+     // porque queda validada al instante)
      const [toast, setToast] = useState({ show: Boolean(state?.cotizacionCreada) });
 
      const regresarCotizacionesScreen = () =>{
           navigate('/cotizaciones');
      }
 
+     useEffect(() => {
+          let vigente = true;
+          setCargando(true);
+          setError('');
+
+          obtenerCotizacion(Number(cotizacionId))
+               .then((cotizacion) => vigente && setData(aDatosCotizacion(cotizacion)))
+               .catch((e) => vigente && setError(e instanceof Error ? e.message : 'No se pudo cargar la cotización.'))
+               .finally(() => vigente && setCargando(false));
+
+          return () => {
+               vigente = false;
+          };
+     }, [cotizacionId]);
+
+     if (cargando) {
+          return (
+               <div className="flex flex-1 flex-col items-center justify-center bg-[#DCE4F3] font-sans antialiased">
+                    <LoadingSpinner />
+                    <p className="text-sm text-gray-600 mt-2">Cargando cotización...</p>
+               </div>
+          );
+     }
+
      if (!data) {
           return (
                <div className="flex flex-1 items-center justify-center bg-[#DCE4F3] font-sans antialiased">
                     <div className="text-center">
-                         <p className="text-black mb-4">No hay una cotización para mostrar.</p>
+                         <p className="text-black mb-4">{error || 'No hay una cotización para mostrar.'}</p>
                          <button
                          type="button"
                          onClick={regresarCotizacionesScreen}
@@ -46,7 +78,9 @@ export default function CotizacionPdfScreen() {
                <main className="flex-1 p-8 md:p-12 overflow-y-auto flex flex-col">
 
                     <div className="flex flex-col items-start justify-between mb-8">
-                         <h1 className="text-4xl font-bold text-black tracking-tight">Cotización creada exitosamente</h1>
+                         <h1 className="text-4xl font-bold text-black tracking-tight">
+                              {state?.cotizacionCreada ? 'Cotización creada exitosamente' : 'Cotización'}
+                         </h1>
                          <h2 className="text-2xl font-bold text-black tracking-tight">N° {data.numeroCotizacion ?? '—'}</h2>
                     </div>
 

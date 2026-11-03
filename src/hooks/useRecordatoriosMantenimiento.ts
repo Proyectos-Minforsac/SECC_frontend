@@ -11,7 +11,7 @@ import { formatearFechaISO } from "../services/visitasProgramadas";
 
 const REVISION_MS = 60_000;
 
-// Avisa al empleado y al técnico cuando una visita de mantenimiento está cerca.
+// Avisa al trabajador y al técnico cuando una visita de mantenimiento está cerca.
 // Se monta en el Layout para que corra mientras haya alguien con sesión iniciada.
 export function useRecordatoriosMantenimiento() {
   const servicios = useVisitas();
@@ -30,9 +30,9 @@ export function useRecordatoriosMantenimiento() {
         const fecha = formatearFechaISO(visita.fecha);
 
         agregarNotificacion({
-          rolDestino: 'empleado',
+          rolDestino: 'trabajador',
           solicitudId: servicio.solicitudId,
-          clave: `recordatorio-${visita.visitaProgramadaId}-${visita.fecha}-empleado`,
+          clave: `recordatorio-${visita.visitaProgramadaId}-${visita.fecha}-trabajador`,
           mensaje: `Recordatorio: el mantenimiento en ${servicio.clienteNombre} es ${cuando} (${fecha}). Técnico asignado: ${servicio.tecnicoNombre}.`,
         });
         agregarNotificacion({
