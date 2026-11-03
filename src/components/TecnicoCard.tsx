@@ -26,7 +26,7 @@ function TablaAireCondicionado({ precios }: { precios: PrecioAire[] }) {
         </p>
       ) : (
         <div className="overflow-x-auto mt-2 flex justify-center">
-        <table className="border border-gray-200 rounded-lg overflow-hidden shadow-sm text-xs">
+        <table className="border border-gray-200 rounded-lg overflow-hidden shadow-sm text-sm">
           <thead className="bg-[#343C8F] text-white">
             <tr>
               {precios.map((precio) => (
@@ -59,13 +59,13 @@ export default function TecnicoCard({ nombre, numeroDocumento, telefono, ubicaci
         <div className="bg-[#222861] p-4 flex justify-end gap-2">
           <button
             onClick={on_edit}
-            className="bg-[#E2E4E9] text-gray-800 text-xs font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
+            className="bg-[#E2E4E9] text-gray-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
             Editar
           </button>
 
           <button
             onClick={on_delete}
-            className="bg-[#E2E4E9] text-gray-800 text-xs font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
+            className="bg-[#E2E4E9] text-gray-800 text-sm font-medium px-3 py-1 rounded-full hover:bg-white transition-colors cursor-pointer">
             Eliminar
           </button>
         </div>
