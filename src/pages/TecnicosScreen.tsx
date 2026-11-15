@@ -9,6 +9,7 @@ import PaginacionComponente from "../components/Paginacion";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import Toast from "../components/Toast";
 import { ChevronDown } from "lucide-react";
+import { aceptarMontoNumero } from "../services/montos";
 
 const CAPACIDADES_AIRE = ["12K", "18K", "24K", "36K", "48K"] as const;
 
@@ -392,12 +393,12 @@ export default function TecnicosScreen() {
                       <input
                         type="number"
                         min={0}
+                        step="0.01"
                         value={preciosAire[cap]}
                         onChange={(e) =>
-                          setPreciosAire((prev) => ({
-                            ...prev,
-                            [cap]: e.target.value === "" ? 0 : Number(e.target.value),
-                          }))
+                          aceptarMontoNumero(e.target.value, (valor) =>
+                            setPreciosAire((prev) => ({ ...prev, [cap]: valor === "" ? 0 : valor }))
+                          )
                         }
                         className="w-full bg-white rounded-full px-5 py-2.5 text-black placeholder-gray-500 text-sm outline-none shadow-sm" />
                     </div>

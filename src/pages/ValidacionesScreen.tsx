@@ -14,7 +14,7 @@ interface ValidacionesState {
   aviso?: { title: string; message: string };
 }
 
-const ENCABEZADO = 'py-3 px-3.5 uppercase text-[11px] font-semibold tracking-wider';
+const ENCABEZADO = 'py-3 px-3.5 uppercase text-sm font-semibold tracking-wider';
 
 // Pantalla del jefe: las estimaciones que esperan su decisión (las más antiguas primero) y el historial de lo que decidió.
 export default function ValidacionesScreen() {
@@ -51,7 +51,7 @@ export default function ValidacionesScreen() {
     return (
       <div className="flex items-center justify-end gap-2">
         <span className="whitespace-nowrap">{margen === null ? '—' : formatearPorcentaje(margen)}</span>
-        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ETIQUETA_SEMAFORO[semaforo].estilo}`}>
+        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ETIQUETA_SEMAFORO[semaforo].estilo}`}>
           {ETIQUETA_SEMAFORO[semaforo].texto}
         </span>
       </div>
@@ -120,7 +120,7 @@ export default function ValidacionesScreen() {
                       <tr key={p.estimacionId} className="hover:bg-blue-50/50 transition-colors even:bg-slate-50/40">
                         <td className="py-2.5 px-3.5 font-medium text-slate-500 whitespace-nowrap">
                           {p.numeroCotizacion}
-                          {p.version > 1 && <span className="ml-2 text-[10px] font-bold text-amber-700">CORREGIDA</span>}
+                          {p.version > 1 && <span className="ml-2 text-sm font-bold text-amber-700">CORREGIDA</span>}
                         </td>
                         <td className="py-2.5 px-3.5 font-semibold text-slate-800">{p.clienteNombre}</td>
                         <td className="py-2.5 px-3.5">{p.tipoServicio || '—'}</td>

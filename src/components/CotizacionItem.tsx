@@ -11,10 +11,10 @@ export default function CardItem({ id_item, nombre, tipo, cantidad, total, costo
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold leading-tight">{nombre}</span>
-            <span className="text-[11px] text-gray-500">{tipo}</span>
+            <span className="text-sm text-gray-500">{tipo}</span>
             {/* Uso interno: el costo de compra no aparece en el PDF del cliente */}
             {costoUnitario !== undefined && (
-              <span className="text-[11px] text-gray-400">Costo de compra: {costoUnitario.toFixed(2)} c/u</span>
+              <span className="text-sm text-gray-400">Costo de compra: {costoUnitario.toFixed(2)} c/u</span>
             )}
           </div>
         </div>
@@ -22,11 +22,11 @@ export default function CardItem({ id_item, nombre, tipo, cantidad, total, costo
         {/* Datos de Cantidad y Subtotal */}
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-start">
-            <span className="text-[10px] text-gray-400 font-medium">Cantidad:</span>
+            <span className="text-sm text-gray-400 font-medium">Cantidad:</span>
             <span className="text-sm font-bold leading-none">{cantidad}</span>
           </div>
           <div className="flex flex-col items-start min-w-[50px]">
-            <span className="text-[10px] text-gray-400 font-medium">Subtotal:</span>
+            <span className="text-sm text-gray-400 font-medium">Subtotal:</span>
             <span className="text-sm font-bold leading-none">{total.toFixed(2)}</span>
           </div>
 

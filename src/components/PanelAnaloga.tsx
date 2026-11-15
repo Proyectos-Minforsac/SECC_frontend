@@ -60,7 +60,7 @@ export default function PanelAnaloga({ analoga, cargando = false, error = '', co
 
       {analoga && (
         <>
-          <p className={`text-[11px] ${t.suave}`}>
+          <p className={`text-sm ${t.suave}`}>
             {analoga.tipoServicio
               ? `${analoga.tipoServicio}${analoga.criterio === 'TIPO_Y_DESTINO' ? ` · destino ${analoga.destino}` : ' · todos los destinos'}`
               : 'Sin tipo de servicio'}
@@ -99,13 +99,13 @@ export default function PanelAnaloga({ analoga, cargando = false, error = '', co
           ) : (
             <p className={`font-semibold ${t.aviso}`}>Sin datos suficientes</p>
           )}
-          {analoga.motivo && <p className={`text-[11px] ${analoga.suficiente ? t.aviso : t.suave}`}>{analoga.motivo}</p>}
+          {analoga.motivo && <p className={`text-sm ${analoga.suficiente ? t.aviso : t.suave}`}>{analoga.motivo}</p>}
 
           {sugerencia && (
             <div className={`flex items-center justify-between gap-3 pt-2 border-t ${t.linea}`}>
               <div>
                 <p className={`font-bold ${t.destacado}`}>Costo sugerido: {formatearMonto(sugerencia.costo)}</p>
-                <p className={`text-[11px] ${t.suave}`}>
+                <p className={`text-sm ${t.suave}`}>
                   El paramétrico {sugerencia.desviacionPorcentaje >= 0 ? 'más' : 'menos'} {formatearPorcentaje(Math.abs(sugerencia.desviacionPorcentaje))}, como en servicios parecidos
                 </p>
               </div>
@@ -117,13 +117,13 @@ export default function PanelAnaloga({ analoga, cargando = false, error = '', co
 
           {analoga.recientes.length > 0 && (
             <div className={`pt-2 border-t ${t.linea} space-y-1`}>
-              <p className={`text-[11px] ${t.suave}`}>Más recientes</p>
+              <p className={`text-sm ${t.suave}`}>Más recientes</p>
               <ul className="space-y-1">
                 {analoga.recientes.map((caso, indice) => (
                   <li key={`${caso.referencia}-${indice}`} className={`flex items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 ${t.fila}`}>
                     <span className={`min-w-0 ${t.texto}`}>
                       <span className="block truncate">{caso.referencia || 'Sin referencia'}</span>
-                      <span className={`block text-[11px] ${t.suave}`}>
+                      <span className={`block text-sm ${t.suave}`}>
                         {caso.origen === 'HISTORICO' ? 'Histórico' : 'Sistema'} · {formatearFechaISO(caso.cerradoEn.slice(0, 10))} ·{' '}
                         {caso.costoReal === null ? '—' : formatearMonto(caso.costoReal)}
                         {caso.margenReal === null ? '' : ` · ${formatearPorcentaje(caso.margenReal)}`}
@@ -134,7 +134,7 @@ export default function PanelAnaloga({ analoga, cargando = false, error = '', co
                         type="button"
                         onClick={() => onCopiar(caso.entradas as EntradasEstimacion)}
                         title="Copia los técnicos, días, noches y viajes de este servicio a la hoja de costos"
-                        className="shrink-0 px-3 py-1 bg-white/90 text-[#2A317A] text-[11px] font-medium rounded-full hover:bg-white transition-colors cursor-pointer"
+                        className="shrink-0 px-3 py-1 bg-white/90 text-[#2A317A] text-sm font-medium rounded-full hover:bg-white transition-colors cursor-pointer"
                       >
                         Copiar parámetros
                       </button>

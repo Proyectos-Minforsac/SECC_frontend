@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { formatearPorcentaje } from '../services/calculoCostos';
 import { formatearMonto } from '../services/solicitudes';
+import { aceptarMonto } from '../services/montos';
 import { formatearFechaHora } from '../services/visitas';
 import { margenBajoMinimo, margenConCosto, type DetalleEstimacion } from '../services/estimaciones';
 
@@ -136,7 +137,7 @@ export default function DecisionValidacion({ detalle, costoSugerido = null, guar
               min={0}
               step="0.01"
               value={costo}
-              onChange={(ev) => setCosto(ev.target.value)}
+              onChange={(ev) => aceptarMonto(ev.target.value, setCosto)}
               className="h-10 w-44 bg-white border border-slate-300 rounded-full px-4 text-black text-sm outline-none focus:border-[#2A317A]"
             />
           </label>

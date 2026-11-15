@@ -107,12 +107,12 @@ export interface ItemParaCosto {
   costoUnitario?: number | null;
 }
 
-// Mismo criterio que la cotización: un ítem es "Título" si viene marcado o si cantidad y precio son 0.
-export const esTitulo = (item: Pick<ItemParaCosto, 'tipo' | 'cantidad' | 'precio'>) =>
-  item.tipo === 'Título' || (Number(item.cantidad) === 0 && Number(item.precio) === 0);
+// Solo es "Título" el ítem que ya venía guardado así (cotizaciones anteriores): un ítem sin cantidad ni precio ya no se
+// convierte en título, simplemente no se acepta.
+export const esTitulo = (item: Pick<ItemParaCosto, 'tipo'>) => item.tipo === 'Título';
 
 // ¿Este ítem lleva costo de compra? Los títulos y los servicios no.
-export const llevaCosto = (item: Pick<ItemParaCosto, 'tipo' | 'cantidad' | 'precio'>) =>
+export const llevaCosto = (item: Pick<ItemParaCosto, 'tipo'>) =>
   !esTitulo(item) && TIPOS_CON_COSTO.includes(item.tipo);
 
 export interface DetalleActividad {
@@ -201,6 +201,10 @@ function costoDeItem(item: ItemParaCosto, problemas: string[]): CostoItem | null
   const costo = Number(crudo);
   if (!Number.isFinite(costo) || costo < 0 || costo > COSTO_ITEM_MAXIMO) {
     problemas.push(`El costo de compra del ítem «${nombre}» no es válido`);
+    return null;
+  }
+  if (!Number.isInteger(Math.round(costo * 100)) || Math.abs(Math.round(costo * 100) - costo * 100) > 1e-7) {
+    problemas.push(`El costo de compra del ítem «${nombre}» solo puede tener hasta 2 decimales`);
     return null;
   }
   const costoUnitario = redondear(costo);

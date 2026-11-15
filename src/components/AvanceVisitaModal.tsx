@@ -116,7 +116,7 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
                 ) : (
                   <div className="w-full h-20 flex flex-col items-center justify-center gap-1 px-2 rounded-xl shadow-sm bg-white text-gray-700">
                     <FileText size={20} />
-                    <span className="w-full text-[10px] text-center truncate">{evidencia.nombre}</span>
+                    <span className="w-full text-sm text-center truncate">{evidencia.nombre}</span>
                   </div>
                 )}
                 <button

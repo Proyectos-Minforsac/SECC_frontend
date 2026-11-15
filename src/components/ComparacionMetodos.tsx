@@ -15,7 +15,7 @@ function Tabla({ metodos, mejor }: { metodos: ExactitudMetodo[]; mejor: string |
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm text-slate-600 border-collapse">
         <thead>
-          <tr className="text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+          <tr className="text-sm uppercase tracking-wider text-slate-500 border-b border-slate-200">
             <th className="py-2 pr-3 font-semibold">Método</th>
             <th className="py-2 px-3 font-semibold text-right">Servicios</th>
             <th className="py-2 px-3 font-semibold text-right">Error medio</th>
@@ -30,7 +30,7 @@ function Tabla({ metodos, mejor }: { metodos: ExactitudMetodo[]; mejor: string |
               <td className="py-1.5 pr-3 text-slate-800">
                 {metodo.etiqueta}
                 {metodo.clave === mejor && (
-                  <span className="ml-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider border bg-emerald-100 text-emerald-700 border-emerald-300/60 whitespace-nowrap">
+                  <span className="ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-bold tracking-wider border bg-emerald-100 text-emerald-700 border-emerald-300/60 whitespace-nowrap">
                     ✓ MÁS EXACTO
                   </span>
                 )}
@@ -92,7 +92,7 @@ export default function ComparacionMetodos({ comparacion, tolerancia }: Comparac
         <Tabla metodos={metodos} mejor={basadoEn === 'PROPIOS' ? mejor : null} />
       </div>
 
-      <p className="text-[11px] text-slate-400">
+      <p className="text-sm text-slate-400">
         {nombreMejor
           ? `El más exacto es «${nombreMejor}», con el menor error medio. `
           : 'Hacen falta al menos dos métodos con servicios para decir cuál es más exacto. '}

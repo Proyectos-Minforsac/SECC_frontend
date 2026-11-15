@@ -51,7 +51,7 @@ export default function HistorialTarifasTabla({ tarifas, destinos }: HistorialTa
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-slate-600 border-collapse">
           <thead>
-            <tr className="bg-[#1e295d] text-white uppercase text-[11px] font-semibold tracking-wider select-none">
+            <tr className="bg-[#1e295d] text-white uppercase text-sm font-semibold tracking-wider select-none">
               <th className="py-3 px-3.5">Registrada</th>
               <th className="py-3 px-3.5">Inductor</th>
               <th className="py-3 px-3.5">Destino</th>
@@ -76,7 +76,7 @@ export default function HistorialTarifasTabla({ tarifas, destinos }: HistorialTa
                   <td className="py-2.5 px-3.5 text-center whitespace-nowrap">{formatearFechaISO(tarifa.vigenteDesde)}</td>
                   <td className="py-2.5 px-3.5 text-slate-700">{tarifa.registradoPor || '—'}</td>
                   <td className="py-2.5 px-3.5 text-center">
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${ESTILO_ESTADO_TARIFA[tarifa.estado]}`}>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border ${ESTILO_ESTADO_TARIFA[tarifa.estado]}`}>
                       {tarifa.estado}
                     </span>
                   </td>

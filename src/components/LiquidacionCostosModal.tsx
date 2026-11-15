@@ -13,6 +13,7 @@ import {
   type PropuestaEtapa,
 } from '../services/costosReales';
 import { formatearMonto } from '../services/solicitudes';
+import { aceptarMontoNumero } from '../services/montos';
 
 interface LiquidacionCostosModalProps {
   isOpen: boolean;
@@ -49,7 +50,7 @@ interface CampoNumeroProps {
 
 function CampoNumero({ etiqueta, valor, onCambiar }: CampoNumeroProps) {
   return (
-    <label className="flex flex-col gap-1 text-[11px] text-slate-500">
+    <label className="flex flex-col gap-1 text-sm text-slate-500">
       {etiqueta}
       <input
         type="number"
@@ -81,7 +82,7 @@ function TarjetaEtapa({ propuesta, editable, onCambiar }: TarjetaEtapaProps) {
           <span className="font-semibold text-slate-800">{propuesta.nombre}</span>
           <span className="font-semibold text-slate-800">{formatearMonto(real.subtotal)}</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-0.5">Lo que costó la oferta aceptada: ya está pagado y no se modifica.</p>
+        <p className="text-sm text-slate-400 mt-0.5">Lo que costó la oferta aceptada: ya está pagado y no se modifica.</p>
       </div>
     );
   }
@@ -93,7 +94,7 @@ function TarjetaEtapa({ propuesta, editable, onCambiar }: TarjetaEtapaProps) {
     <div className="bg-white rounded-2xl px-5 py-4 text-sm text-slate-700 shadow-sm space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="font-semibold text-slate-800">{propuesta.nombre}</span>
-        <span className="text-[11px] text-slate-400">
+        <span className="text-sm text-slate-400">
           Ejecutado: {propuesta.ejecutado.visitas} {propuesta.ejecutado.visitas === 1 ? 'visita completada' : 'visitas completadas'} ·{' '}
           {pluralizar(propuesta.ejecutado.dias, 'día')} con visita
         </span>
@@ -108,7 +109,7 @@ function TarjetaEtapa({ propuesta, editable, onCambiar }: TarjetaEtapaProps) {
 
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-200">
+          <tr className="text-sm uppercase tracking-wider text-slate-400 border-b border-slate-200">
             <th className="py-1.5 pr-2 font-semibold">Rubro</th>
             <th className="py-1.5 px-2 font-semibold w-28">Precio (S/)</th>
             <th className="py-1.5 px-2 font-semibold text-right">Real</th>
@@ -126,7 +127,7 @@ function TarjetaEtapa({ propuesta, editable, onCambiar }: TarjetaEtapaProps) {
               <tr key={rubro.categoria}>
                 <td className="py-1.5 pr-2">
                   <span className="text-slate-800">{rubro.etiqueta}</span>
-                  <span className="block text-[11px] text-slate-400">
+                  <span className="block text-sm text-slate-400">
                     {pluralizar(entradas.nTecnicos, 'técnico')} × {pluralizar(factor.cantidad(entradas), factor.unidad)}
                   </span>
                 </td>
@@ -138,10 +139,9 @@ function TarjetaEtapa({ propuesta, editable, onCambiar }: TarjetaEtapaProps) {
                     aria-label={`Precio de ${rubro.etiqueta.toLowerCase()}`}
                     value={editable.precios[rubro.categoria as CategoriaCosto]}
                     onChange={(e) =>
-                      onCambiar({
-                        ...editable,
-                        precios: { ...editable.precios, [rubro.categoria]: e.target.value === '' ? '' : Number(e.target.value) },
-                      })
+                      aceptarMontoNumero(e.target.value, (valor) =>
+                        onCambiar({ ...editable, precios: { ...editable.precios, [rubro.categoria]: valor } })
+                      )
                     }
                     className={ESTILO_CAMPO}
                   />
@@ -157,7 +157,7 @@ function TarjetaEtapa({ propuesta, editable, onCambiar }: TarjetaEtapaProps) {
             <tr>
               <td className="py-1.5 pr-2">
                 <span className="text-slate-800">Materiales</span>
-                <span className="block text-[11px] text-slate-400">Costo real de compra</span>
+                <span className="block text-sm text-slate-400">Costo real de compra</span>
               </td>
               <td className="py-1.5 px-2">
                 <input
@@ -166,7 +166,7 @@ function TarjetaEtapa({ propuesta, editable, onCambiar }: TarjetaEtapaProps) {
                   step="0.01"
                   aria-label="Costo real de los materiales"
                   value={editable.materiales}
-                  onChange={(e) => onCambiar({ ...editable, materiales: e.target.value === '' ? '' : Number(e.target.value) })}
+                  onChange={(e) => aceptarMontoNumero(e.target.value, (valor) => onCambiar({ ...editable, materiales: valor }))}
                   className={ESTILO_CAMPO}
                 />
               </td>
@@ -274,7 +274,7 @@ export default function LiquidacionCostosModal({
               <div className="pt-2 mt-1 border-t border-slate-200">
                 <p className="font-semibold text-slate-800">Imprevistos de estas etapas: {formatearMonto(imprevistos)}</p>
                 {propuesta.imprevistos.length > 0 ? (
-                  <ul className="mt-1 space-y-0.5 text-[12px] text-slate-600">
+                  <ul className="mt-1 space-y-0.5 text-sm text-slate-600">
                     {propuesta.imprevistos.map((i) => (
                       <li key={i.costoRealId} className="flex justify-between gap-3">
                         <span>
@@ -286,9 +286,9 @@ export default function LiquidacionCostosModal({
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-[12px] text-slate-400">No se registraron imprevistos en estas etapas.</p>
+                  <p className="text-sm text-slate-400">No se registraron imprevistos en estas etapas.</p>
                 )}
-                <p className="mt-1 text-[11px] text-slate-400">
+                <p className="mt-1 text-sm text-slate-400">
                   Provisión de imprevistos calculada al cotizar: {formatearMonto(propuesta.provision)} · usada en todo el servicio: {formatearMonto(propuesta.imprevistosServicio)}
                 </p>
               </div>

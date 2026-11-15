@@ -279,6 +279,10 @@ export const obtenerCotizacionesDeSolicitud = (solicitudId: number) =>
     'No se pudieron cargar las cotizaciones del servicio'
   );
 
+// Ids de las solicitudes que ya tienen una cotización (en cualquier estado). Sirve para no ofrecer "Crear cotización" otra vez.
+export const obtenerSolicitudesCotizadas = () =>
+  pedir<number[]>('/cotizaciones/solicitudes-cotizadas', 'GET', undefined, 'No se pudieron cargar las solicitudes cotizadas');
+
 // Datos para dibujar el PDF de la cotización (el mismo documento que se envía al cliente).
 export const aDatosCotizacion = (c: CotizacionDeSolicitud): CotizacionData => ({
   cliente: c.cliente?.nombre ?? '',

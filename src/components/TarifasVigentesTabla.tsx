@@ -28,7 +28,7 @@ export default function TarifasVigentesTabla({ tarifario }: TarifasVigentesTabla
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-slate-600 border-collapse">
           <thead>
-            <tr className="bg-[#1e295d] text-white uppercase text-[11px] font-semibold tracking-wider select-none">
+            <tr className="bg-[#1e295d] text-white uppercase text-sm font-semibold tracking-wider select-none">
               <th className="py-3 px-3.5">Destino</th>
               {INDUCTORES.map((inductor) => (
                 <th key={inductor.clave} className="py-3 px-3.5 text-right">
@@ -57,7 +57,7 @@ export default function TarifasVigentesTabla({ tarifario }: TarifasVigentesTabla
                           <span className={tarifa.heredada ? 'italic text-slate-400' : 'font-medium text-slate-800'}>
                             {formatearMonto(tarifa.monto)}
                           </span>
-                          <span className="block text-[11px] text-slate-400">
+                          <span className="block text-sm text-slate-400">
                             {tarifa.heredada ? 'general' : `desde ${formatearFechaISO(tarifa.vigenteDesde)}`}
                           </span>
                         </>

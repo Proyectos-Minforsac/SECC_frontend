@@ -65,7 +65,7 @@ export default function HojaCostos({
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1 text-[11px] text-slate-300">
+            <label className="flex flex-col gap-1 text-sm text-slate-300">
               Destino (define las tarifas)
               <div className="relative">
                 <select
@@ -82,7 +82,7 @@ export default function HojaCostos({
             </label>
 
             {moneda === 'DÓLARES' && (
-              <label className="flex flex-col gap-1 text-[11px] text-slate-300">
+              <label className="flex flex-col gap-1 text-sm text-slate-300">
                 Tipo de cambio (S/ por US$)
                 <input
                   type="number"
@@ -109,7 +109,7 @@ export default function HojaCostos({
             </div>
           ))}
 
-          <div className="border-t border-[#343C8F] pt-3 space-y-1 text-[11px] text-slate-300">
+          <div className="border-t border-[#343C8F] pt-3 space-y-1 text-sm text-slate-300">
             <p className="flex justify-between gap-3">
               <span>Materiales: el costo de compra se ingresa al agregar cada ítem</span>
               <span className="text-white">{formatearMonto(resultado.materiales)}</span>

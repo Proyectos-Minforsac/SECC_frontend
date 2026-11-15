@@ -32,6 +32,7 @@ import {
   type Valor,
 } from '../services/calculoCostos';
 import { DESTINO_GENERAL } from '../services/tarifario';
+import { aceptarMontoNumero } from '../services/montos';
 import { useDatosDeCosto } from '../hooks/useDatosDeCosto';
 import { useSolicitudes } from '../hooks/useSolicitudes';
 
@@ -44,6 +45,9 @@ interface NuevaCotizacionState {
 
 // Justificación mínima que exige el servidor cuando el jefe acepta un margen bajo el mínimo.
 const JUSTIFICACION_MINIMA = 10;
+
+// Tipos que se pueden elegir al agregar un ítem; sin uno de ellos el ítem no entra a la cotización.
+const TIPOS_DE_ITEM = ['Producto', 'Alquiler', 'Impresora'];
 
 const detalleImpresoraVacio: DetalleImpresora = {
   fecha: '',
@@ -367,16 +371,23 @@ export const NuevaCotizacionScreen = () => {
       return;
     }
 
-    // Si precio y cantidad son 0, es un título
-    const esTitulo = Number(cantidad) === 0 && Number(precio) === 0;
-
-    if (cantidad === '' && precio === '') {
-      mostrarToastError("Complete cantidad y precio, o coloque ambos en 0 si el ítem es un título.");
+    // Un ítem sin tipo no entra a la cotización
+    if (!TIPOS_DE_ITEM.includes(tipo)) {
+      mostrarToastError("Seleccione el tipo de ítem.");
       return;
     }
 
-    // Los productos, impresoras y alquileres llevan costo de compra; los servicios no (su costo es la mano de obra).
-    const itemLlevaCosto = !esTitulo && TIPOS_CON_COSTO.includes(tipo);
+    if (!(Number(cantidad) > 0)) {
+      mostrarToastError("Ingrese una cantidad mayor que 0.");
+      return;
+    }
+    if (!(Number(precio) > 0)) {
+      mostrarToastError("Ingrese un precio unitario mayor que 0.");
+      return;
+    }
+
+    // Los productos, impresoras y alquileres llevan costo de compra, que es de uso interno
+    const itemLlevaCosto = TIPOS_CON_COSTO.includes(tipo);
     if (itemLlevaCosto && COSTO_OBLIGATORIO.includes(tipo) && costoCompra === '') {
       mostrarToastError("Ingrese el costo de compra del ítem.");
       return;
@@ -386,10 +397,10 @@ export const NuevaCotizacionScreen = () => {
       id: itemEditandoId ?? Date.now(),
       nombre: nombreItem,
       descripcion: descripcion,
-      tipo: esTitulo ? "Título" : tipo,
+      tipo,
       cantidad: Number(cantidad),
       precio: Number(precio),
-      total: esTitulo ? 0 : totalItemActual,
+      total: totalItemActual,
       ...(itemLlevaCosto && costoCompra !== '' ? { costoUnitario: Number(costoCompra) } : {}),
       ...(tipo === 'Impresora' ? { detalleImpresora } : {}),
     };
@@ -424,8 +435,8 @@ export const NuevaCotizacionScreen = () => {
     setItemEditandoId(item.id);
     setNombreItem(item.nombre);
     setDescripcion(item.descripcion);
-    // Un título se guardó con tipo "Título" (no es una opción del selector): vuelve a quedar sin tipo
-    setTipo(item.tipo === 'Título' ? '' : item.tipo);
+    // Un ítem de una cotización anterior puede traer un tipo que ya no existe (Título, Servicio): hay que elegir uno nuevo
+    setTipo(TIPOS_DE_ITEM.includes(item.tipo) ? item.tipo : '');
     setCantidad(item.cantidad);
     setPrecio(item.precio);
     setCostoCompra(item.costoUnitario ?? '');
@@ -770,7 +781,6 @@ export const NuevaCotizacionScreen = () => {
                   >
                     <option value="" disabled>Seleccionar</option>
                     <option value="Producto">Producto</option>
-                    <option value="Servicio">Servicio</option>
                     <option value="Alquiler">Alquiler</option>
                     <option value="Impresora">Impresora</option>
                   </select>
@@ -809,22 +819,25 @@ export const NuevaCotizacionScreen = () => {
                       <label className="text-s text-white">Precio unitario:</label>
                       <input
                         type="number"
+                        min={0}
+                        step="0.01"
                         placeholder="0.00"
                         value={precio}
-                        onChange={(e) => setPrecio(e.target.value ? Number(e.target.value) : '')}
+                        onChange={(e) => aceptarMontoNumero(e.target.value, setPrecio)}
                         className="w-full h-10 bg-white rounded-full px-4 text-black text-center text-sm outline-none shadow-sm my-2"
                       />
                     </div>
-                    {/* Costo de compra (uso interno): los servicios no lo llevan, su costo es la mano de obra */}
+                    {/* Costo de compra (uso interno): hasta 2 decimales */}
                     {TIPOS_CON_COSTO.includes(tipo) && (
                       <div className="flex-1 space-y-1">
                         <label className="text-s text-white" title="Uso interno: no aparece en el PDF">Costo de compra:</label>
                         <input
                           type="number"
                           min={0}
+                          step="0.01"
                           placeholder="0.00"
                           value={costoCompra}
-                          onChange={(e) => setCostoCompra(e.target.value ? Number(e.target.value) : '')}
+                          onChange={(e) => aceptarMontoNumero(e.target.value, setCostoCompra)}
                           className="w-full h-10 bg-white rounded-full px-4 text-black text-center text-sm outline-none shadow-sm my-2"
                         />
                       </div>

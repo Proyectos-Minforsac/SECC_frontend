@@ -63,7 +63,7 @@ export default function OfertaFila({ oferta, puedeDecidir, decidiendo = null, on
         </div>
       ) : (
         <span
-          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border shrink-0 ${ESTILO_ESTADO_OFERTA[oferta.estado]}`}
+          className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border shrink-0 ${ESTILO_ESTADO_OFERTA[oferta.estado]}`}
         >
           {oferta.estado}
         </span>

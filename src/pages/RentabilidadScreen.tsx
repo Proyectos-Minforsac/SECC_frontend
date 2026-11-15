@@ -40,7 +40,7 @@ function Cifra({ etiqueta, valor, detalle, destacada = false, insignia }: CifraP
       <p className="text-sm text-slate-500">{etiqueta}</p>
       <p className={`font-semibold text-slate-900 ${destacada ? 'text-5xl' : 'text-2xl'}`}>{valor}</p>
       {insignia && (
-        <span className={`self-start inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${insignia.estilo}`}>
+        <span className={`self-start inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${insignia.estilo}`}>
           {insignia.texto}
         </span>
       )}
@@ -307,7 +307,7 @@ export default function RentabilidadScreen() {
                           <span>
                             <span className="font-semibold text-slate-800">{servicio.clienteNombre || `Servicio ${servicio.visitaId}`}</span>
                             <span className="text-slate-400"> · {servicio.tipoServicio || 'Sin tipo'} · {formatearFechaHora(servicio.canceladaEn)}</span>
-                            {servicio.motivo && <span className="block text-[12px] text-slate-500">{servicio.motivo}</span>}
+                            {servicio.motivo && <span className="block text-sm text-slate-500">{servicio.motivo}</span>}
                           </span>
                           <span className="font-medium text-slate-800">{formatearMonto(servicio.monto)}</span>
                         </li>
@@ -317,7 +317,7 @@ export default function RentabilidadScreen() {
                 )}
               </section>
 
-              <p className="text-[11px] text-slate-400">
+              <p className="text-sm text-slate-400">
                 Las cifras de lo real y lo estimado vienen de los servicios cerrados. Los históricos cargados desde Excel cuentan en lo real y, si traen
                 el costo estimado, también en la comparación.
               </p>

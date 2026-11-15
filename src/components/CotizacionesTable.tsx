@@ -35,7 +35,7 @@ export default function CotizacionesTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm text-slate-600 border-collapse">
         <thead>
-          <tr className="bg-[#1e295d] text-white uppercase text-[11px] font-semibold tracking-wider select-none">
+          <tr className="bg-[#1e295d] text-white uppercase text-sm font-semibold tracking-wider select-none">
             <th className="py-3 px-3.5">N° Cotización</th>
             <th className="py-3 px-3.5">Cliente</th>
             <th className="py-3 px-3.5">Solicitante</th>
@@ -68,7 +68,7 @@ export default function CotizacionesTable({
                   </td>
                   <td className="py-2.5 px-3.5 text-center">
                     {cotizacion.validacionEstado ? (
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_VALIDACION[cotizacion.validacionEstado]}`}>
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_VALIDACION[cotizacion.validacionEstado]}`}>
                         {cotizacion.validacionEstado}
                       </span>
                     ) : (
@@ -79,7 +79,7 @@ export default function CotizacionesTable({
                     {cotizacion.margen === null ? <span className="text-slate-400">—</span> : `${Number(cotizacion.margen).toFixed(2)} %`}
                   </td>
                   <td className="py-2.5 px-3.5 text-center">
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${ESTILO_ESTADO_COTIZACION[cotizacion.estado]}`}>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border ${ESTILO_ESTADO_COTIZACION[cotizacion.estado]}`}>
                       {cotizacion.estado}
                     </span>
                   </td>

@@ -34,7 +34,7 @@ export default function HistorialServicios({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm text-slate-600 border-collapse">
         <thead>
-          <tr className="bg-[#1e295d] text-white uppercase text-[11px] font-semibold tracking-wider select-none">
+          <tr className="bg-[#1e295d] text-white uppercase text-sm font-semibold tracking-wider select-none">
             <th className="py-3 px-3.5 text-center">Ítem</th>
             <th className="py-3 px-3.5">Empresa</th>
             <th className="py-3 px-3.5">Descripción</th>
@@ -74,7 +74,7 @@ export default function HistorialServicios({
                     {garantia ? (
                       <div className="flex flex-col items-center">
                         <span className="text-slate-700">{formatearFechaISO(garantia.fin)}</span>
-                        {garantiaVencida && !servicio.cierre && <span className="text-[10px] font-bold tracking-wider text-rose-600">VENCIDA</span>}
+                        {garantiaVencida && !servicio.cierre && <span className="text-sm font-bold tracking-wider text-rose-600">VENCIDA</span>}
                       </div>
                     ) : (
                       <span className="text-slate-400" title="Se calcula desde la última visita de instalación completada">—</span>
@@ -92,7 +92,7 @@ export default function HistorialServicios({
                       <div className="flex flex-col items-center">
                         <span className="font-medium text-slate-800">{formatearMargen(control.margenReal)}</span>
                         {control.desviacionMargen !== null && control.desviacionMargen !== undefined && (
-                          <span className={`text-[10px] font-bold ${control.desviacionMargen < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                          <span className={`text-sm font-bold ${control.desviacionMargen < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
                             {control.desviacionMargen > 0 ? '+' : ''}{control.desviacionMargen.toFixed(2)} pts
                           </span>
                         )}
@@ -102,7 +102,7 @@ export default function HistorialServicios({
                     )}
                   </td>
                   <td className="py-2.5 px-3.5 text-center">
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_SERVICIO[estado]}`}>
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_SERVICIO[estado]}`}>
                       {estado}
                     </span>
                   </td>
@@ -118,7 +118,7 @@ export default function HistorialServicios({
                           <ExternalLink size={14} />
                           Abrir carpeta
                         </a>
-                        <span className="text-[11px] text-slate-400">Cerrado el {servicio.cierre.fecha}</span>
+                        <span className="text-sm text-slate-400">Cerrado el {servicio.cierre.fecha}</span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-1">
@@ -135,7 +135,7 @@ export default function HistorialServicios({
                           {cerrando || preparando ? <Loader2 size={14} className="animate-spin" /> : !progresoVisitas.culminado && <Lock size={12} />}
                           {cerrando ? 'Cerrando…' : preparando ? 'Preparando…' : 'Cerrar Servicio'}
                         </button>
-                        {cerrando && <span className="text-[11px] text-slate-500">{progreso}</span>}
+                        {cerrando && <span className="text-sm text-slate-500">{progreso}</span>}
                       </div>
                     )}
                   </td>

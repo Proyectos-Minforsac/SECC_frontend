@@ -85,7 +85,7 @@ export default function ParametrosCostoForm({ parametros, guardando = false, onG
               </div>
               <p className="text-sm text-slate-500">{definicion.ayuda}</p>
               {definido && actualizadoPor && (
-                <p className="text-[11px] text-slate-400">
+                <p className="text-sm text-slate-400">
                   Actualizado por {actualizadoPor}
                   {actualizadoEn ? ` el ${formatearFechaHora(actualizadoEn)}` : ''}
                 </p>

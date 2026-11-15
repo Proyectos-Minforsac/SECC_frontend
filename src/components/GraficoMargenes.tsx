@@ -121,7 +121,7 @@ export default function GraficoMargenes({ servicios, margenMinimo }: GraficoMarg
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600 border-collapse">
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+              <tr className="text-sm uppercase tracking-wider text-slate-500 border-b border-slate-200">
                 <th className="py-2 pr-3 font-semibold">Servicio</th>
                 <th className="py-2 px-3 font-semibold text-right">Margen estimado</th>
                 <th className="py-2 px-3 font-semibold text-right">Margen real</th>
@@ -147,7 +147,7 @@ export default function GraficoMargenes({ servicios, margenMinimo }: GraficoMarg
             {marcas.map((marca) => (
               <g key={marca}>
                 <line x1={x(marca)} x2={x(marca)} y1={MARGEN_SUP - 6} y2={alto - PIE + 4} stroke={marca === 0 ? EJE : GRILLA} strokeWidth="1" />
-                <text x={x(marca)} y={alto - 10} textAnchor="middle" fontSize="11" fill={TINTA.apagada} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <text x={x(marca)} y={alto - 10} textAnchor="middle" fontSize="13" fill={TINTA.apagada} style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {marca} %
                 </text>
               </g>
@@ -157,7 +157,7 @@ export default function GraficoMargenes({ servicios, margenMinimo }: GraficoMarg
             {margenMinimo !== null && (
               <g>
                 <line x1={x(margenMinimo)} x2={x(margenMinimo)} y1={MARGEN_SUP - 6} y2={alto - PIE + 4} stroke={TINTA.secundaria} strokeWidth="1.5" />
-                <text x={x(margenMinimo)} y={MARGEN_SUP - 12} textAnchor="middle" fontSize="11" fill={TINTA.secundaria}>
+                <text x={x(margenMinimo)} y={MARGEN_SUP - 12} textAnchor="middle" fontSize="13" fill={TINTA.secundaria}>
                   Mínimo {margenMinimo} %
                 </text>
               </g>
@@ -187,7 +187,7 @@ export default function GraficoMargenes({ servicios, margenMinimo }: GraficoMarg
                   {/* Zona sensible: la fila entera, mucho más grande que los puntos */}
                   <rect x={0} y={y - ALTO_FILA / 2} width={ANCHO} height={ALTO_FILA} fill={resaltada ? '#f2f1ee' : 'transparent'} />
 
-                  <text x={MARGEN_IZQ - 14} y={y + 4} textAnchor="end" fontSize="12" fill={TINTA.secundaria}>
+                  <text x={MARGEN_IZQ - 14} y={y + 4} textAnchor="end" fontSize="13" fill={TINTA.secundaria}>
                     <title>{f.servicio.referencia}</title>
                     {recortar(f.servicio.referencia || 'Sin referencia', 28)}
                   </text>
@@ -201,7 +201,7 @@ export default function GraficoMargenes({ servicios, margenMinimo }: GraficoMarg
                       x={rotuloALaDerecha ? derecha + 14 : izquierda - 14}
                       y={y + 4}
                       textAnchor={rotuloALaDerecha ? 'start' : 'end'}
-                      fontSize="12"
+                      fontSize="13"
                       fontWeight="600"
                       fill={TINTA.primaria}
                     >
@@ -240,7 +240,7 @@ export default function GraficoMargenes({ servicios, margenMinimo }: GraficoMarg
           )}
         </div>
       )}
-      <figcaption className="mt-2 text-[11px] text-slate-400">
+      <figcaption className="mt-2 text-sm text-slate-400">
         {filas.length === MAXIMO_SERVICIOS ? `Los ${MAXIMO_SERVICIOS} servicios más recientes. ` : ''}
         Margen sobre la venta sin IGV. La distancia entre los dos puntos es la desviación.
       </figcaption>

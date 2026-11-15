@@ -19,7 +19,7 @@ export default function TablaAgrupada({ encabezado, grupos, etiqueta = (clave) =
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm text-slate-600 border-collapse">
         <thead>
-          <tr className="text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+          <tr className="text-sm uppercase tracking-wider text-slate-500 border-b border-slate-200">
             <th className="py-2 pr-3 font-semibold">{encabezado}</th>
             <th className="py-2 px-3 font-semibold text-right">Servicios</th>
             <th className="py-2 px-3 font-semibold text-right">Venta</th>

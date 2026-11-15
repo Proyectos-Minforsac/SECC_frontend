@@ -11,6 +11,7 @@ import {
 import { useSolicitudes } from "../hooks/useSolicitudes"
 import { agregarNotificacion } from "../services/notificaciones"
 import { useAuth } from "../context/AuthContext"
+import { aceptarMonto } from "../services/montos"
 
 export default function SolicitudesTecnicoScreen() {
   const { usuario } = useAuth();
@@ -76,7 +77,7 @@ export default function SolicitudesTecnicoScreen() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600 border-collapse">
             <thead>
-              <tr className="bg-[#1e295d] text-white uppercase text-[11px] font-semibold tracking-wider select-none">
+              <tr className="bg-[#1e295d] text-white uppercase text-sm font-semibold tracking-wider select-none">
                 <th className="py-3 px-3.5 text-center">N°</th>
                 <th className="py-3 px-3.5">Cliente</th>
                 <th className="py-3 px-3.5">Descripción</th>
@@ -107,7 +108,7 @@ export default function SolicitudesTecnicoScreen() {
                       </td>
                       <td className="py-2.5 px-3.5 text-center whitespace-nowrap">{solicitud.fecha}</td>
                       <td className="py-2.5 px-3.5 text-center">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${ESTILO_ESTADO[solicitud.estado]}`}>
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border ${ESTILO_ESTADO[solicitud.estado]}`}>
                           {solicitud.estado}
                         </span>
                       </td>
@@ -170,7 +171,7 @@ export default function SolicitudesTecnicoScreen() {
                   step="0.01"
                   placeholder="0.00"
                   value={monto}
-                  onChange={(e) => setMonto(e.target.value)}
+                  onChange={(e) => aceptarMonto(e.target.value, setMonto)}
                   className="w-full bg-white rounded-full pl-12 pr-5 py-2.5 text-sm text-black placeholder-gray-500 shadow-sm outline-none"
                 />
               </div>

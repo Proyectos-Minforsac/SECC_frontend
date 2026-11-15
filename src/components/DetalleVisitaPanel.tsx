@@ -64,7 +64,7 @@ export default function DetalleVisitaPanel({ detalle, cliente, onCerrar }: Detal
     <aside className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{detalle.etapa}</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-slate-400">{detalle.etapa}</p>
           <h2 className="text-xl font-bold text-slate-800">{detalle.nombre}</h2>
           <p className="text-sm text-slate-500">
             {detalle.clienteNombre} · Técnico: {detalle.tecnicoNombre}

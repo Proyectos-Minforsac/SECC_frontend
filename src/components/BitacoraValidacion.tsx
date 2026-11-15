@@ -26,7 +26,7 @@ export default function BitacoraValidacion({ anotaciones }: { anotaciones: Anota
           <li key={a.ajusteId} className="rounded-xl border border-slate-200 px-4 py-3 text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ESTILO_ACCION[a.accion]}`}>
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ESTILO_ACCION[a.accion]}`}>
                   {ETIQUETA_ACCION[a.accion]}
                 </span>
                 <span className="text-slate-500">versión {a.version}</span>

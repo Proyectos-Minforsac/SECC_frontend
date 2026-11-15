@@ -123,7 +123,7 @@ export default function VisitasTecnicoScreen() {
                       <p className="text-sm text-slate-500 truncate">{visita.descripcion}</p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${ESTILO_ESTADO_VISITA[visita.estado]}`}>
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border ${ESTILO_ESTADO_VISITA[visita.estado]}`}>
                         {visita.estado}
                       </span>
                       <ChevronDown
@@ -205,13 +205,13 @@ export default function VisitasTecnicoScreen() {
                                           {formatearFechaISO(vp.fecha)} · {vp.horaInicio} - {vp.horaFin}
                                         </span>
                                         {vp.avance ? (
-                                          <span className="text-[10px] font-bold tracking-wider text-emerald-700">COMPLETADA</span>
+                                          <span className="text-sm font-bold tracking-wider text-emerald-700">COMPLETADA</span>
                                         ) : esActual ? (
                                           <span className="px-3 py-0.5 bg-[#2A317A] text-white text-sm font-medium rounded-full">
                                             Registrar avance
                                           </span>
                                         ) : (
-                                          <span className="text-[10px] font-bold tracking-wider text-slate-400">PENDIENTE</span>
+                                          <span className="text-sm font-bold tracking-wider text-slate-400">PENDIENTE</span>
                                         )}
                                       </span>
                                       <span className="block mt-1">{vp.descripcionTareas}</span>

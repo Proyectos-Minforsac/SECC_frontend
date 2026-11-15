@@ -91,7 +91,7 @@ export default function SeguimientoVisitas({
                 <p className="text-sm text-slate-500 truncate">Técnico: {visita.tecnicoNombre}</p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${ESTILO_ESTADO_VISITA[visita.estado]}`}>
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border ${ESTILO_ESTADO_VISITA[visita.estado]}`}>
                   {visita.estado}
                 </span>
                 <ChevronDown size={18} className={`text-slate-500 transition-transform ${servicioAbierto ? 'rotate-180' : ''}`} />
@@ -110,7 +110,7 @@ export default function SeguimientoVisitas({
                       className="shrink-0 flex items-center gap-1 px-4 py-1.5 bg-amber-100 text-amber-800 text-sm font-medium rounded-full hover:bg-amber-200 transition-colors shadow-sm cursor-pointer"
                     >
                       Imprevistos
-                      {sinMonto > 0 && <span className="text-[11px] font-bold">({sinMonto} sin monto)</span>}
+                      {sinMonto > 0 && <span className="text-sm font-bold">({sinMonto} sin monto)</span>}
                     </button>
                   </li>
                 )}
@@ -256,7 +256,7 @@ export default function SeguimientoVisitas({
                                     <Clock size={14} className="text-slate-500 shrink-0" />
                                     Visita {orden + 1} · {formatearFechaISO(vp.fecha)} · {vp.horaInicio} - {vp.horaFin}
                                   </span>
-                                  <span className={`text-[10px] font-bold tracking-wider ${vp.avance ? 'text-emerald-700' : 'text-slate-400'}`}>
+                                  <span className={`text-sm font-bold tracking-wider ${vp.avance ? 'text-emerald-700' : 'text-slate-400'}`}>
                                     {vp.avance ? 'COMPLETADA' : 'PENDIENTE'}
                                   </span>
                                 </span>

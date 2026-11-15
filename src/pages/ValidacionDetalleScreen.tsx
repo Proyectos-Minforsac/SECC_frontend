@@ -88,7 +88,7 @@ export default function ValidacionDetalleScreen() {
             {detalle ? `Validar ${detalle.cotizacion.numeroCotizacion}` : 'Validar cotización'}
           </h1>
           {estimacion && (
-            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_VALIDACION[estimacion.estado]}`}>
+            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_VALIDACION[estimacion.estado]}`}>
               {estimacion.estado}
             </span>
           )}
@@ -123,7 +123,7 @@ export default function ValidacionDetalleScreen() {
                 ['Total (+ IGV)', `${detalle.cotizacion.moneda === 'DÓLARES' ? 'US$' : 'S/'} ${detalle.cotizacion.total.toFixed(2)}`],
               ].map(([etiqueta, valor]) => (
                 <div key={etiqueta}>
-                  <p className="text-[11px] uppercase tracking-wider text-slate-500">{etiqueta}</p>
+                  <p className="text-sm uppercase tracking-wider text-slate-500">{etiqueta}</p>
                   <p className="font-semibold text-slate-800">{valor}</p>
                 </div>
               ))}

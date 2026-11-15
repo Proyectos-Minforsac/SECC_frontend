@@ -213,10 +213,16 @@ export default function VisitasTecnicasScreen() {
             onEliminar={setVisitaProgramadaEliminar}
             onFinalizarEtapa={handleFinalizarEtapa}
           />
-          {detalleVisita && (
+          {detalleVisita ? (
             <div className="xl:sticky xl:top-4">
               <DetalleVisitaPanel detalle={detalleVisita} cliente={clienteDelDetalle} onCerrar={() => setSeleccionDetalle(null)} />
             </div>
+          ) : (
+            visitas.length > 0 && (
+              <div className="xl:sticky xl:top-4 flex min-h-40 items-center justify-center rounded-2xl border-2 border-dashed border-slate-400/70 bg-white/50 p-8 text-center">
+                <p className="text-sm text-slate-500">Acá verá los detalles de cada visita.</p>
+              </div>
+            )
           )}
         </div>
 

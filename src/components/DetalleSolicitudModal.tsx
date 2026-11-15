@@ -9,7 +9,7 @@ interface DetalleSolicitudModalProps {
 function Dato({ etiqueta, valor }: { etiqueta: string; valor?: string }) {
   return (
     <div>
-      <p className="text-[11px] uppercase tracking-wider text-gray-500">{etiqueta}</p>
+      <p className="text-sm uppercase tracking-wider text-gray-500">{etiqueta}</p>
       <p className="text-black">{valor || '—'}</p>
     </div>
   );

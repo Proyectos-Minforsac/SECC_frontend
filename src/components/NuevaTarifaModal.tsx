@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import AgregarEditarModal from './Modal';
 import { hoyISO } from '../services/mantenimientos';
 import { DESTINO_GENERAL, INDUCTORES, type Inductor, type NuevaTarifa } from '../services/tarifario';
+import { aceptarMonto } from '../services/montos';
 
 interface NuevaTarifaModalProps {
   isOpen: boolean;
@@ -95,7 +96,7 @@ export default function NuevaTarifaModal({ isOpen, destinos, guardando = false, 
                 step="0.01"
                 placeholder="0.00"
                 value={monto}
-                onChange={(e) => setMonto(e.target.value)}
+                onChange={(e) => aceptarMonto(e.target.value, setMonto)}
                 className="w-full bg-white rounded-full pl-12 pr-5 py-2.5 text-sm text-black placeholder-gray-500 shadow-sm outline-none"
               />
             </div>

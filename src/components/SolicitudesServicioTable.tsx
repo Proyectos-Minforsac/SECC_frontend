@@ -33,7 +33,7 @@ export default function SolicitudesServicioTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm text-slate-600 border-collapse">
         <thead>
-          <tr className="bg-[#1e295d] text-white uppercase text-[11px] font-semibold tracking-wider select-none">
+          <tr className="bg-[#1e295d] text-white uppercase text-sm font-semibold tracking-wider select-none">
             <th className="py-3 px-3.5 text-center">N°</th>
             <th className="py-3 px-3.5">Cliente</th>
             <th className="py-3 px-3.5">Descripción</th>
@@ -87,7 +87,7 @@ export default function SolicitudesServicioTable({
                   )}
                 </td>
                 <td className="py-2.5 px-3.5 text-center">
-                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${ESTILO_ESTADO[solicitud.estado]}`}>
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border ${ESTILO_ESTADO[solicitud.estado]}`}>
                     {solicitud.estado}
                   </span>
                 </td>

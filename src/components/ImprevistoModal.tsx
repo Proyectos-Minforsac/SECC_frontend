@@ -12,6 +12,7 @@ import {
   type EtapaCosto,
 } from '../services/costosReales';
 import { formatearMonto } from '../services/solicitudes';
+import { aceptarMonto } from '../services/montos';
 import { formatearFechaHora, type VisitaTecnica } from '../services/visitas';
 
 interface ImprevistoModalProps {
@@ -137,7 +138,7 @@ export default function ImprevistoModal({ isOpen, visita, onClose }: ImprevistoM
                           {i.etiqueta} <span className="font-normal text-slate-400">· {NOMBRE_ETAPA_COSTO[i.etapa]}</span>
                         </p>
                         <p className="text-slate-600">{i.motivo}</p>
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-sm text-slate-400">
                           {i.registradoPor} · {formatearFechaHora(i.registradoEn)}
                         </p>
                       </div>
@@ -145,9 +146,9 @@ export default function ImprevistoModal({ isOpen, visita, onClose }: ImprevistoM
                         {i.estado === 'REGISTRADO' ? (
                           <p className="font-semibold text-slate-900">{formatearMonto(i.subtotal ?? 0)}</p>
                         ) : (
-                          <p className="text-[11px] font-bold tracking-wider text-amber-700">SIN MONTO</p>
+                          <p className="text-sm font-bold tracking-wider text-amber-700">SIN MONTO</p>
                         )}
-                        {i.liquidada && <p className="text-[11px] text-slate-400">Liquidado</p>}
+                        {i.liquidada && <p className="text-sm text-slate-400">Liquidado</p>}
                       </div>
                     </div>
 
@@ -162,7 +163,7 @@ export default function ImprevistoModal({ isOpen, visita, onClose }: ImprevistoM
                               aria-label="Monto del imprevisto avisado"
                               placeholder="Monto (S/)"
                               value={montos[i.costoRealId] ?? ''}
-                              onChange={(e) => setMontos((actual) => ({ ...actual, [i.costoRealId]: e.target.value }))}
+                              onChange={(e) => aceptarMonto(e.target.value, (valor) => setMontos((actual) => ({ ...actual, [i.costoRealId]: valor })))}
                               className="h-8 w-32 bg-slate-50 border border-slate-300 rounded-full px-3 text-sm text-black outline-none"
                             />
                             <button
@@ -217,7 +218,7 @@ export default function ImprevistoModal({ isOpen, visita, onClose }: ImprevistoM
                   </label>
                   <label className="flex flex-col gap-1 text-sm text-slate-300">
                     Monto (S/)
-                    <input type="number" min={0} step="0.01" value={monto} onChange={(e) => setMonto(e.target.value)} className={ESTILO_CAMPO} />
+                    <input type="number" min={0} step="0.01" value={monto} onChange={(e) => aceptarMonto(e.target.value, setMonto)} className={ESTILO_CAMPO} />
                   </label>
                 </div>
                 <label className="flex flex-col gap-1 text-sm text-slate-300">

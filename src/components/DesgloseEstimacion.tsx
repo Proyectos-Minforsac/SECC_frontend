@@ -75,12 +75,12 @@ export default function DesgloseEstimacion({ detalle }: { detalle: DetalleEstima
               <p className="font-bold text-slate-900">
                 Margen: {e.margenFinal === null ? '—' : formatearPorcentaje(e.margenFinal)}
               </p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-sm text-slate-500">
                 {margenMinimo === null ? 'El mínimo aún no está definido' : `Mínimo: ${formatearPorcentaje(margenMinimo)}`}
                 {ajustada && e.margenParametrico !== null && ` · antes del ajuste: ${formatearPorcentaje(e.margenParametrico)}`}
               </p>
             </div>
-            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ETIQUETA_SEMAFORO[semaforo].estilo}`}>
+            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ETIQUETA_SEMAFORO[semaforo].estilo}`}>
               {ETIQUETA_SEMAFORO[semaforo].texto}
             </span>
           </div>
@@ -136,7 +136,7 @@ export default function DesgloseEstimacion({ detalle }: { detalle: DetalleEstima
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600 border-collapse">
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+              <tr className="text-sm uppercase tracking-wider text-slate-500 border-b border-slate-200">
                 <th className="py-2 pr-3 font-semibold">Ítem</th>
                 <th className="py-2 px-3 font-semibold text-right">Cant.</th>
                 <th className="py-2 px-3 font-semibold text-right">Precio</th>
@@ -168,7 +168,7 @@ export default function DesgloseEstimacion({ detalle }: { detalle: DetalleEstima
             </tbody>
           </table>
         </div>
-        <p className="text-[11px] text-slate-400">
+        <p className="text-sm text-slate-400">
           Los servicios no llevan costo de compra: su costo está en la mano de obra de las actividades.
         </p>
       </section>

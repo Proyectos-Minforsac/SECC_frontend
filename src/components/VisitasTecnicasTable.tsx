@@ -9,7 +9,7 @@ export default function VisitasTecnicasTable({ visitas }: VisitasTecnicasTablePr
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm text-slate-600 border-collapse">
         <thead>
-          <tr className="bg-[#1e295d] text-white uppercase text-[11px] font-semibold tracking-wider select-none">
+          <tr className="bg-[#1e295d] text-white uppercase text-sm font-semibold tracking-wider select-none">
             <th className="py-3 px-3.5 text-center">N°</th>
             <th className="py-3 px-3.5">Cliente</th>
             <th className="py-3 px-3.5">Técnico</th>
@@ -28,7 +28,7 @@ export default function VisitasTecnicasTable({ visitas }: VisitasTecnicasTablePr
                 <td className="py-2.5 px-3.5 text-slate-600">{visita.descripcion}</td>
                 <td className="py-2.5 px-3.5 text-center whitespace-nowrap">{visita.fecha}</td>
                 <td className="py-2.5 px-3.5 text-center">
-                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_VISITA[visita.estado]}`}>
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ESTILO_ESTADO_VISITA[visita.estado]}`}>
                     {visita.estado}
                   </span>
                 </td>

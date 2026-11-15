@@ -58,24 +58,24 @@ export default function ResumenCostos({ resultado: r, problemas, cargando, moned
           <p className="font-bold text-white">
             Margen estimado: {r.margen === null ? '—' : formatearPorcentaje(r.margen)}
           </p>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-sm text-slate-400">
             {margenMinimo === null ? 'El jefe aún no definió el margen mínimo' : `Mínimo: ${formatearPorcentaje(margenMinimo)}`}
           </p>
         </div>
-        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider border whitespace-nowrap ${ETIQUETA_SEMAFORO[semaforo].estilo}`}>
+        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider border whitespace-nowrap ${ETIQUETA_SEMAFORO[semaforo].estilo}`}>
           {ETIQUETA_SEMAFORO[semaforo].texto}
         </span>
       </div>
 
       {!cargando && r.sinTasaImprevistos && (
-        <p className="text-[11px] text-amber-300">
+        <p className="text-sm text-amber-300">
           {errorParametros
             ? 'No se pudieron cargar los parámetros del jefe: no se aplica provisión de imprevistos.'
             : 'El jefe aún no definió la tasa de imprevistos: no se aplica provisión.'}
         </p>
       )}
       {!cargando && problemas.length > 0 && (
-        <ul className="text-[11px] text-amber-300 space-y-0.5 list-disc pl-4">
+        <ul className="text-sm text-amber-300 space-y-0.5 list-disc pl-4">
           {problemas.map((problema) => (
             <li key={problema}>{problema}</li>
           ))}
