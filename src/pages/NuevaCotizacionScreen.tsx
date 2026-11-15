@@ -953,7 +953,7 @@ export const NuevaCotizacionScreen = () => {
               />
 
               {/* Total acumulado general */}
-              <div className='space-y-2.5 overflow-y-auto max-h-[350px] pr-1'>
+              <div className='space-y-2.5 overflow-y-auto max-h-87.5 pr-1'>
                 <div className="bg-[#8E92A7] rounded-xl p-3.5 flex items-center justify-between text-black font-bold shadow-inner mt-4">
                   <span className="text-sm font-medium">Total (+ IGV)</span>
                   <span className="text-base font-bold tracking-wide">{totalConIGV.toFixed(2)}</span>
