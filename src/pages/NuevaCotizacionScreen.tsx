@@ -908,9 +908,9 @@ export const NuevaCotizacionScreen = () => {
             <div className="lg:col-span-5 flex flex-col h-full justify-between space-y-3">
 
               {/* Contenedor de lista */}
-              <div className="space-y-2.5 overflow-y-auto max-h-[350px] pr-1">
+              <div className="space-y-2.5 overflow-y-auto max-h-87.5 pr-1">
                 {items.length === 0 ? (
-                  <div className="flex items-center justify-center h-32 text-gray-500 italic text-white">
+                  <div className="flex items-center justify-center h-32 text-white italic">
                     No hay ítems agregados
                   </div>
                 ) : (
