@@ -2,6 +2,7 @@ import './App.css'
 import CotizacionPdfScreen from './pages/CotizacionPDFScreen';
 import CotizacionPDFPruebaScreen from './pages/CotizacionPDFPruebaScreen';
 import ConformidadPDFPruebaScreen from './pages/ConformidadPDFPruebaScreen';
+import ReporteServicioPDFPruebaScreen from './pages/ReporteServicioPDFPruebaScreen';
 import ClientesScreen from './pages/ClientesScreen'
 import CotizacionesScreen from './pages/CotizacionesScreen'
 import LoginScreen from './pages/InicioSesionScreen'
@@ -42,6 +43,7 @@ function App() {
             <Route path="/cotizaciones/:cotizacionId/pdf" element={<CotizacionPdfScreen/>}/>
             <Route path="/cotizacion-pdf/prueba" element={<CotizacionPDFPruebaScreen />} />
             <Route path="/conformidad-pdf/prueba" element={<ConformidadPDFPruebaScreen />} />
+            <Route path="/reporte-servicio-pdf/prueba" element={<ReporteServicioPDFPruebaScreen />} />
             <Route path="/visitas-tecnicas" element={<VisitasTecnicasScreen />}/>
           </Route>
         </Route>

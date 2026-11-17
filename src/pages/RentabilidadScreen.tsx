@@ -132,7 +132,7 @@ export default function RentabilidadScreen() {
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-black tracking-tight">Rentabilidad</h1>
-          <p className="text-sm text-slate-600 mt-1">Margen de rentabilidad por proceso: lo estimado frente a lo que ocurrió, con la venta sin IGV.</p>
+          {/* <p className="text-sm text-slate-600 mt-1">Margen de rentabilidad por proceso: lo estimado frente a lo que ocurrió, con la venta sin IGV.</p> */}
         </div>
 
         {/* Filtros y exportación: una sola fila sobre todo lo que cambian */}
@@ -249,7 +249,7 @@ export default function RentabilidadScreen() {
               <section className="bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-4">
                 <div>
                   <h2 className="text-xl font-bold text-black tracking-tight">Margen estimado frente al real</h2>
-                  <p className="text-sm text-slate-500">Cada fila une lo que se esperaba con lo que dejó el servicio.</p>
+                  {/* <p className="text-sm text-slate-500">Cada fila une lo que se esperaba con lo que dejó el servicio.</p> */}
                 </div>
                 <GraficoMargenes servicios={datos.servicios} margenMinimo={margenMinimo} />
               </section>

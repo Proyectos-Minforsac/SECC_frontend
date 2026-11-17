@@ -125,10 +125,10 @@ export default function ConformidadPDFPruebaScreen() {
       <main className="flex-1 p-8 md:p-12 overflow-y-auto flex flex-col">
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-black tracking-tight">Vista previa del documento de conformidad</h1>
-          <p className="text-black text-sm mt-1">
+          {/* <p className="text-black text-sm mt-1">
             Datos de ejemplo para ajustar el diseño. Edita <b>src/components/ConformidadDocumento.tsx</b> (diseño) o{' '}
             <b>src/services/conformidad.ts</b> (preguntas y datos) y la vista se actualiza al guardar.
-          </p>
+          </p> */}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 mb-4">

@@ -107,10 +107,10 @@ export default function CotizacionPDFPruebaScreen() {
       <main className="flex-1 p-8 md:p-12 overflow-y-auto flex flex-col">
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-black tracking-tight">Vista previa del PDF de cotización</h1>
-          <p className="text-black text-sm mt-1">
+          {/* <p className="text-black text-sm mt-1">
             Datos de ejemplo para ajustar el diseño. Edita <b>src/components/CotizacionReporte.tsx</b> y la vista se
             actualiza al guardar.
-          </p>
+          </p> */}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 mb-4">
