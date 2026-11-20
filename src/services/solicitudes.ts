@@ -55,7 +55,7 @@ export interface NuevaSolicitudServicio {
 export interface NuevaOferta {
   tecnicoNombre: string;
   montoVisita: number;
-  // Opcional y por ahora sin uso: la oferta solo lleva el monto. Si se envía, el backend lo guarda en Drive.
+  // Cotización del técnico (PDF o Word, hasta 8 MB), opcional. El backend la guarda en Drive.
   archivo?: File | null;
 }
 

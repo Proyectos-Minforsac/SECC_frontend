@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FileText, X } from 'lucide-react';
 import AgregarEditarModal from './Modal';
+import SelectorEvidencias from './SelectorEvidencias';
 import type { EvidenciaVisita } from '../services/visitas';
-import type { AvanceVisita } from '../services/visitasProgramadas';
+import type { NuevoAvance } from '../services/visitasProgramadas';
+import { quitarEvidencia } from '../services/evidencias';
 import { CONCEPTOS_IMPREVISTO, type ConceptoImprevisto } from '../services/costosReales';
 
 interface AvanceVisitaModalProps {
@@ -10,12 +11,15 @@ interface AvanceVisitaModalProps {
   clienteNombre: string;
   // Fecha y horario de la visita que se está completando, ya formateados.
   resumenVisita: string;
+  // Servicio y visita a los que se adjuntan las evidencias del avance
+  visitaId: number | null;
+  visitaProgramadaId: number | null;
   onClose: () => void;
-  onGuardar: (avance: AvanceVisita) => void;
+  onGuardar: (avance: NuevoAvance) => void;
   guardando?: boolean;
 }
 
-export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita, onClose, onGuardar, guardando = false }: AvanceVisitaModalProps) {
+export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita, visitaId, visitaProgramadaId, onClose, onGuardar, guardando = false }: AvanceVisitaModalProps) {
   const [descripcion, setDescripcion] = useState('');
   const [evidencias, setEvidencias] = useState<EvidenciaVisita[]>([]);
   const [error, setError] = useState('');
@@ -35,30 +39,12 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
     }
   }, [isOpen]);
 
-  // Al cancelar se liberan los archivos; al guardar pasan a la visita y se conservan.
+  // Los archivos ya se subieron al elegirlos: al cancelar se quitan del servidor; al guardar quedan con el avance.
   const cerrar = () => {
-    evidencias.forEach((e) => URL.revokeObjectURL(e.url));
+    evidencias.forEach((e) => {
+      if (e.evidenciaId !== undefined) quitarEvidencia(e.evidenciaId).catch(() => undefined);
+    });
     onClose();
-  }
-
-  const agregarArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const archivos = Array.from(e.target.files ?? []);
-    setEvidencias((prev) => [
-      ...prev,
-      ...archivos.map((archivo) => ({
-        nombre: archivo.name,
-        url: URL.createObjectURL(archivo),
-        esImagen: archivo.type.startsWith('image/'),
-        subidoEn: new Date().toISOString(),
-      })),
-    ]);
-    // Permite volver a elegir el mismo archivo después de quitarlo
-    e.target.value = '';
-  }
-
-  const quitarArchivo = (indice: number) => {
-    URL.revokeObjectURL(evidencias[indice].url);
-    setEvidencias((prev) => prev.filter((_, i) => i !== indice));
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,7 +57,6 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
 
     onGuardar({
       descripcion: descripcion.trim(),
-      evidencias,
       ...(hayImprevisto ? { imprevisto: { concepto, descripcion: descripcionImprevisto.trim() } } : {}),
     });
   }
@@ -92,44 +77,9 @@ export default function AvanceVisitaModal({ isOpen, clienteNombre, resumenVisita
           className="w-full h-28 bg-white rounded-2xl p-4 text-black placeholder-gray-500 text-sm outline-none resize-none shadow-sm"
         />
 
-        <label className="text-white">Imágenes y documentación</label>
-        <input
-          type="file"
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-          multiple
-          onChange={agregarArchivos}
-          className="w-full bg-white rounded-full text-sm text-gray-800 shadow-sm cursor-pointer outline-none
-             file:mr-4 file:py-2.5 file:px-6 file:rounded-full file:border-0
-             file:text-sm file:font-semibold file:bg-gray-900 file:text-white
-             hover:file:bg-black file:cursor-pointer transition-colors"
-        />
-        {evidencias.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
-            {evidencias.map((evidencia, indice) => (
-              <div key={evidencia.url} className="relative">
-                {evidencia.esImagen ? (
-                  <img
-                    src={evidencia.url}
-                    alt={evidencia.nombre}
-                    className="w-full h-20 object-cover rounded-xl shadow-sm bg-white"
-                  />
-                ) : (
-                  <div className="w-full h-20 flex flex-col items-center justify-center gap-1 px-2 rounded-xl shadow-sm bg-white text-gray-700">
-                    <FileText size={20} />
-                    <span className="w-full text-sm text-center truncate">{evidencia.nombre}</span>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  aria-label={`Quitar ${evidencia.nombre}`}
-                  onClick={() => quitarArchivo(indice)}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 cursor-pointer hover:bg-black"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
+        <label className="text-white">Imágenes y documentación (imágenes, PDF o Word)</label>
+        {visitaProgramadaId !== null && visitaId !== null && (
+          <SelectorEvidencias destino={{ visitaId, visitaProgramadaId }} evidencias={evidencias} onCambio={setEvidencias} deshabilitado={guardando} />
         )}
 
         <label className="flex items-center gap-2 text-white text-sm cursor-pointer">

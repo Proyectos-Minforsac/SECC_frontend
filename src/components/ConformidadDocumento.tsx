@@ -149,7 +149,7 @@ export default function ConformidadDocumento({ datos }: { datos: DatosConformida
         </View>
 
         <Text style={styles.note}>
-          Puede completar este documento y responder al correo en el que lo recibió para dar su conformidad.
+          Puede completar este documento y devolverlo firmado por el mismo medio por el que lo recibió para dar su conformidad.
         </Text>
       </Page>
     </Document>

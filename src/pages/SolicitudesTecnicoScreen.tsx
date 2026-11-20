@@ -12,6 +12,7 @@ import { useSolicitudes } from "../hooks/useSolicitudes"
 import { agregarNotificacion } from "../services/notificaciones"
 import { useAuth } from "../context/AuthContext"
 import { aceptarMonto } from "../services/montos"
+import { MAX_BYTES } from "../services/evidencias"
 
 export default function SolicitudesTecnicoScreen() {
   const { usuario } = useAuth();
@@ -24,6 +25,8 @@ export default function SolicitudesTecnicoScreen() {
   const [detalleId, setDetalleId] = useState<number | null>(null);
   const solicitudDetalle = solicitudes.find((s) => s.solicitudId === detalleId) ?? null;
   const [monto, setMonto] = useState("");
+  // Cotización del técnico en PDF o Word (opcional)
+  const [archivo, setArchivo] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
 
@@ -33,13 +36,33 @@ export default function SolicitudesTecnicoScreen() {
   const abrirModal = (solicitud: SolicitudServicio) => {
     setSolicitudActiva(solicitud);
     setMonto(miOferta(solicitud)?.montoVisita.toString() ?? "");
+    setArchivo(null);
     setError("");
   }
 
   const cerrarModal = () => {
     setSolicitudActiva(null);
     setMonto("");
+    setArchivo(null);
     setError("");
+  }
+
+  const elegirArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const elegido = e.target.files?.[0] ?? null;
+    if (!elegido) return setArchivo(null);
+
+    if (!/\.(pdf|doc|docx)$/i.test(elegido.name)) {
+      e.target.value = "";
+      setArchivo(null);
+      return setError("La cotización debe ser un PDF o un documento Word (DOC o DOCX).");
+    }
+    if (elegido.size > MAX_BYTES) {
+      e.target.value = "";
+      setArchivo(null);
+      return setError("La cotización pesa más de 8 MB.");
+    }
+    setError("");
+    setArchivo(elegido);
   }
 
   const handleEnviarOferta = async (e: React.FormEvent) => {
@@ -53,7 +76,7 @@ export default function SolicitudesTecnicoScreen() {
 
     setEnviando(true);
     try {
-      await enviarOferta(solicitudActiva.solicitudId, { tecnicoNombre, montoVisita });
+      await enviarOferta(solicitudActiva.solicitudId, { tecnicoNombre, montoVisita, archivo });
     } catch (err) {
       setEnviando(false);
       return setError(err instanceof Error ? err.message : "No se pudo enviar la oferta.");
@@ -175,6 +198,23 @@ export default function SolicitudesTecnicoScreen() {
                   className="w-full bg-white rounded-full pl-12 pr-5 py-2.5 text-sm text-black placeholder-gray-500 shadow-sm outline-none"
                 />
               </div>
+
+              <label className="text-white">Cotización del técnico (PDF o Word, hasta 8 MB)</label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={elegirArchivo}
+                aria-label="Adjuntar la cotización"
+                className="w-full bg-white rounded-full text-sm text-gray-800 shadow-sm cursor-pointer outline-none
+                   file:mr-4 file:py-2.5 file:px-6 file:rounded-full file:border-0
+                   file:text-sm file:font-semibold file:bg-gray-900 file:text-white
+                   hover:file:bg-black file:cursor-pointer transition-colors"
+              />
+              {!archivo && miOferta(solicitudActiva)?.archivoNombre && (
+                <p className="text-sm text-slate-300">
+                  Archivo enviado: {miOferta(solicitudActiva)?.archivoNombre}. Elige otro solo si quieres reemplazarlo.
+                </p>
+              )}
 
               {error && <p className="text-sm text-red-300 text-center">{error}</p>}
 

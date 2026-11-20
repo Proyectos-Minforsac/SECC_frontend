@@ -1,4 +1,5 @@
 import { pedir } from './http';
+import { conUrlCompleta } from './evidencias';
 import { cargarResumenCostos, type EtapaPayload } from './costosReales';
 
 export type EstadoVisita ='AUTORIZADA' | 'DIAGNÓSTICO COMPLETADO' | 'ACTIVO' | 'CANCELADA';
@@ -22,6 +23,8 @@ export const tipoDeEtapa = (indice: number): TipoVisita | null => TIPOS_VISITA[i
 export const nombreDeTipo = (tipo: TipoVisita) => ETAPAS_SERVICIO[TIPOS_VISITA.indexOf(tipo) + 1];
 
 export interface EvidenciaVisita {
+  // Id de la evidencia en el servidor (para quitarla antes de registrar el diagnóstico o el avance).
+  evidenciaId?: number;
   nombre: string;
   url: string;
   // false para documentos (PDF, Word, etc.); si no se indica se trata como imagen.
@@ -53,6 +56,9 @@ export interface DiagnosticoVisita {
   componentes: string[];
   evidencias: EvidenciaVisita[];
 }
+
+// Lo que escribe el técnico al registrar su diagnóstico
+export type NuevoDiagnostico = Pick<DiagnosticoVisita, 'descripcion' | 'componentes'>;
 
 // Se registra cuando el trabajador cierra el servicio: toda su documentación queda en una carpeta de Drive.
 export interface CierreServicio {
@@ -122,13 +128,10 @@ const listeners = new Set<() => void>();
 
 const emitirCambio = () => listeners.forEach((listener) => listener());
 
-// Las evidencias (imágenes y documentos) todavía no se guardan en el backend. Se conservan en el navegador
-// mientras la pestaña siga abierta y se vuelven a unir a la visita cada vez que llega una versión del servidor.
-const evidenciasDiagnostico = new Map<number, EvidenciaVisita[]>();
-
+// Las evidencias del diagnóstico las guarda el servidor (en Drive) y llegan con la visita; su URL es relativa a la API.
 const conEvidencias = (visita: VisitaTecnica): VisitaTecnica =>
   visita.diagnostico
-    ? { ...visita, diagnostico: { ...visita.diagnostico, evidencias: evidenciasDiagnostico.get(visita.visitaId) ?? [] } }
+    ? { ...visita, diagnostico: { ...visita.diagnostico, evidencias: visita.diagnostico.evidencias.map(conUrlCompleta) } }
     : visita;
 
 const guardarVisita = (recibida: VisitaTecnica) => {
@@ -157,17 +160,11 @@ export const cargarVisitas = () => {
   return cargaEnCurso;
 }
 
-export const guardarDiagnostico = async (visitaId: number, diagnostico: DiagnosticoVisita) => {
-  const { descripcion, componentes, evidencias } = diagnostico;
-  const visita = await pedir<VisitaTecnica>(
-    `/visitas/${visitaId}/diagnostico`,
-    'POST',
-    { descripcion, componentes },
-    'No se pudo guardar el diagnóstico'
+// Las evidencias ya se subieron al servidor antes de guardar el texto del diagnóstico: aquí solo viaja el texto.
+export const guardarDiagnostico = async (visitaId: number, { descripcion, componentes }: NuevoDiagnostico) =>
+  guardarVisita(
+    await pedir<VisitaTecnica>(`/visitas/${visitaId}/diagnostico`, 'POST', { descripcion, componentes }, 'No se pudo guardar el diagnóstico')
   );
-  evidenciasDiagnostico.set(visitaId, evidencias);
-  return guardarVisita(visita);
-}
 
 // Se llama al aceptar la cotización ligada a esta solicitud: habilita la etapa de
 // Instalación para el técnico. Devuelve la visita activada, o null si la solicitud no tiene una.

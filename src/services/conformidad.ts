@@ -1,8 +1,6 @@
 import type { Cliente } from './clientes';
 import type { DetalleVisita } from './detalleVisita';
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
-
 export interface PreguntaConformidad {
   pregunta: string;
   // Cada pregunta se responde marcando una de estas opciones.
@@ -98,58 +96,40 @@ export const armarDatosConformidad = (
 export const nombreArchivoConformidad = (datos: DatosConformidad) =>
   `Conformidad-visita-${datos.numeroVisita}-${datos.clienteNombre.replace(/[^a-zA-Z0-9]+/g, '_')}.pdf`;
 
-// Convierte el PDF generado a base64 (sin el prefijo "data:...;base64,") para enviarlo en JSON.
-const blobABase64 = (blob: Blob) =>
-  new Promise<string>((resolve, reject) => {
-    const lector = new FileReader();
-    lector.onload = () => resolve(String(lector.result).split(',')[1] ?? '');
-    lector.onerror = () => reject(new Error('No se pudo leer el PDF generado'));
-    lector.readAsDataURL(blob);
-  });
-
-// Envía el PDF al correo registrado del cliente; el cliente puede responder ese mismo correo.
-export async function enviarConformidad(datos: DatosConformidad, pdf: Blob): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/conformidad/enviar`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      correoDestino: datos.clienteCorreo,
-      clienteNombre: datos.clienteNombre,
-      nombreVisita: datos.nombreVisita,
-      nombreArchivo: nombreArchivoConformidad(datos),
-      pdfBase64: await blobABase64(pdf),
-    }),
-  });
-
-  if (!response.ok) {
-    const cuerpo = await response.json().catch(() => null);
-    throw new Error(cuerpo?.message ?? 'No se pudo enviar el documento de conformidad');
-  }
+// Descarga el PDF en el equipo de quien lo genera; el envío al cliente se hace fuera del sistema.
+export function descargarConformidad(pdf: Blob, nombreArchivo: string) {
+  const url = URL.createObjectURL(pdf);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombreArchivo;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-export interface ConformidadEnviada {
-  enviadaEn: string;
-  correo: string;
+export interface ConformidadGenerada {
+  generadaEn: string;
   nombreArchivo: string;
   // Se conserva para archivarlo en Drive al cerrar el servicio.
   pdf: Blob;
 }
 
-// Temporal: se recuerda en memoria qué visitas ya recibieron su conformidad, mientras no exista el endpoint.
-const enviadas = new Map<string, ConformidadEnviada>();
+// Temporal: se recuerda en memoria qué visitas ya tienen su conformidad generada, mientras no exista el endpoint.
+const generadas = new Map<string, ConformidadGenerada>();
 const listeners = new Set<() => void>();
-let instantanea: ReadonlyMap<string, ConformidadEnviada> = new Map();
+let instantanea: ReadonlyMap<string, ConformidadGenerada> = new Map();
 
 export const claveVisitaConformidad = (visitaId: number, visitaProgramadaId?: number) =>
   `${visitaId}-${visitaProgramadaId ?? 'diagnostico'}`;
 
-export const registrarConformidadEnviada = (clave: string, conformidad: Omit<ConformidadEnviada, 'enviadaEn'>) => {
-  enviadas.set(clave, { ...conformidad, enviadaEn: new Date().toLocaleString('es-PE') });
-  instantanea = new Map(enviadas);
+export const registrarConformidadGenerada = (clave: string, conformidad: Omit<ConformidadGenerada, 'generadaEn'>) => {
+  generadas.set(clave, { ...conformidad, generadaEn: new Date().toLocaleString('es-PE') });
+  instantanea = new Map(generadas);
   listeners.forEach((listener) => listener());
 };
 
-export const obtenerConformidadesEnviadas = () => instantanea;
+export const obtenerConformidadesGeneradas = () => instantanea;
 
 export const suscribirseAConformidades = (listener: () => void) => {
   listeners.add(listener);

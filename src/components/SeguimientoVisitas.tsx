@@ -142,12 +142,12 @@ export default function SeguimientoVisitas({
 
                   // Solo la instalación se finaliza; el mantenimiento y el soporte terminan al cerrar el servicio.
                   const puedeFinalizar = activa && indice === INDICE_INSTALACION && servicioEditable;
-                  const ayudaEtapa =
-                    tipo === 'MANTENIMIENTO'
-                      ? 'Programa los mantenimientos preventivos del servicio. Esta etapa termina al cerrar el servicio.'
-                      : tipo === 'SOPORTE'
-                        ? 'Programa una visita cuando el cliente reporte una falla. Está disponible hasta que se cierre el servicio.'
-                        : 'Programa las visitas que el técnico deberá realizar en esta etapa.';
+                  // const ayudaEtapa =
+                  //   tipo === 'MANTENIMIENTO'
+                  //     ? 'Programa los mantenimientos preventivos del servicio. Esta etapa termina al cerrar el servicio.'
+                  //     : tipo === 'SOPORTE'
+                  //       ? 'Programa una visita cuando el cliente reporte una falla. Está disponible hasta que se cierre el servicio.'
+                  //       : 'Programa las visitas que el técnico deberá realizar en esta etapa.';
                   const hayPendientes = programadas.some((vp) => !vp.avance);
                   const sinVisitas = programadas.length === 0;
 
@@ -200,7 +200,7 @@ export default function SeguimientoVisitas({
                                       ? 'Etapa finalizada.'
                                       : visita.estado !== 'ACTIVO'
                                         ? 'Se habilita cuando se acepte la cotización y el servicio pase a ACTIVO.'
-                                        : motivoSinProgramar ?? ayudaEtapa}
+                                        : motivoSinProgramar ?? ''}
                               </p>
                               <div className="flex items-center gap-2 shrink-0">
                                 {puedeFinalizar && (

@@ -45,8 +45,8 @@ export default function ActividadCostos({ etapa, datos, detalle, tarifasUsadas, 
         <span className="text-sm font-semibold text-white">{NOMBRE_ACTIVIDAD[etapa]}</span>
         <span className="text-sm font-bold text-white">{formatearMonto(detalle.subtotal)}</span>
       </div>
-      <p className="text-sm text-slate-300">{AYUDA[etapa]}</p>
-
+      {/*<p className="text-sm text-slate-300">{AYUDA[etapa]}</p>*/}
+      
       <div className="grid grid-cols-4 gap-2">
         {campos.map(({ campo, etiqueta }) => (
           <label key={campo} className="flex flex-col gap-1 text-sm text-slate-300">

@@ -6,6 +6,7 @@ import { useVisitasProgramadas } from "../hooks/useVisitasProgramadas"
 import DiagnosticoModal from "../components/DiagnosticoModal"
 import AvanceVisitaModal from "../components/AvanceVisitaModal"
 import AvanceVisitaDetalle from "../components/AvanceVisitaDetalle"
+import ListaEvidencias from "../components/ListaEvidencias"
 import Toast from "../components/Toast"
 import { agregarNotificacion } from "../services/notificaciones"
 import { CONCEPTOS_IMPREVISTO } from "../services/costosReales"
@@ -14,7 +15,7 @@ import {
   guardarAvanceVisitaProgramada,
   visitaProgramadaActual,
   visitasDeEtapa,
-  type AvanceVisita,
+  type NuevoAvance,
 } from "../services/visitasProgramadas"
 import {
   ESTILO_ESTADO_VISITA,
@@ -23,7 +24,7 @@ import {
   formatearFechaHora,
   guardarDiagnostico,
   tipoDeEtapa,
-  type DiagnosticoVisita,
+  type NuevoDiagnostico,
 } from "../services/visitas"
 
 export default function VisitasTecnicoScreen() {
@@ -48,7 +49,7 @@ export default function VisitasTecnicoScreen() {
   const mostrarError = (e: unknown, porDefecto: string) =>
     setToast({ show: true, type: "error", message: e instanceof Error ? e.message : porDefecto });
 
-  const handleGuardarAvance = async (avance: AvanceVisita) => {
+  const handleGuardarAvance = async (avance: NuevoAvance) => {
     if (!visitaProgramadaAvance || !servicioAvance || guardando) return;
 
     setGuardando(true);
@@ -76,7 +77,7 @@ export default function VisitasTecnicoScreen() {
     setToast({ show: true, type: "success", message: "La visita se completó y se notificó al trabajador." });
   }
 
-  const handleGuardarDiagnostico = async (diagnostico: DiagnosticoVisita) => {
+  const handleGuardarDiagnostico = async (diagnostico: NuevoDiagnostico) => {
     if (!visitaDiagnostico || guardando) return;
 
     setGuardando(true);
@@ -250,19 +251,7 @@ export default function VisitasTecnicoScreen() {
                                   <span className="font-medium text-slate-700">Componentes: </span>
                                   {visita.diagnostico.componentes.join(", ")}
                                 </p>
-                                {visita.diagnostico.evidencias.length > 0 && (
-                                  <div className="flex flex-wrap gap-2">
-                                    {visita.diagnostico.evidencias.map((evidencia) => (
-                                      <a key={evidencia.url} href={evidencia.url} target="_blank" rel="noopener noreferrer">
-                                        <img
-                                          src={evidencia.url}
-                                          alt={evidencia.nombre}
-                                          className="w-20 h-20 object-cover rounded-xl shadow-sm"
-                                        />
-                                      </a>
-                                    ))}
-                                  </div>
-                                )}
+                                <ListaEvidencias evidencias={visita.diagnostico.evidencias} />
                               </div>
                             )}
                           </li>
@@ -281,6 +270,7 @@ export default function VisitasTecnicoScreen() {
         <DiagnosticoModal
           isOpen={visitaDiagnostico !== null}
           clienteNombre={visitaDiagnostico?.clienteNombre ?? ""}
+          visitaId={visitaDiagnostico?.visitaId ?? null}
           onClose={() => setDiagnosticoVisitaId(null)}
           onGuardar={handleGuardarDiagnostico}
           guardando={guardando}
@@ -294,6 +284,8 @@ export default function VisitasTecnicoScreen() {
               ? `${formatearFechaISO(visitaProgramadaAvance.fecha)} · ${visitaProgramadaAvance.horaInicio} - ${visitaProgramadaAvance.horaFin}`
               : ""
           }
+          visitaId={servicioAvance?.visitaId ?? null}
+          visitaProgramadaId={visitaProgramadaAvance?.visitaProgramadaId ?? null}
           onClose={() => setAvanceVisitaId(null)}
           onGuardar={handleGuardarAvance}
           guardando={guardando}

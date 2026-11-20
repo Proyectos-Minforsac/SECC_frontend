@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { CheckCircle2, Download, Eye, FileText, Mail, X } from 'lucide-react';
+import { CheckCircle2, Download, Eye, FileText, X } from 'lucide-react';
 import DocumentoVisorModal from './DocumentoVisorModal';
 import Toast from './Toast';
 import { useConformidades } from '../hooks/useConformidades';
 import {
   armarDatosConformidad,
-  enviarConformidad,
+  descargarConformidad,
   nombreArchivoConformidad,
-  registrarConformidadEnviada,
+  registrarConformidadGenerada,
 } from '../services/conformidad';
 import type { Cliente } from '../services/clientes';
 import { formatearFechaHora, tipoEvidencia, type EvidenciaVisita } from '../services/visitas';
@@ -15,7 +15,7 @@ import type { DetalleVisita } from '../services/detalleVisita';
 
 interface DetalleVisitaPanelProps {
   detalle: DetalleVisita;
-  // Cliente del servicio; de su correo depende el envío de la conformidad.
+  // Cliente del servicio; sus datos van en el documento de conformidad.
   cliente: Cliente | null;
   onCerrar: () => void;
 }
@@ -23,40 +23,37 @@ interface DetalleVisitaPanelProps {
 // Panel con los datos de una visita y los documentos que el técnico subió para ella.
 export default function DetalleVisitaPanel({ detalle, cliente, onCerrar }: DetalleVisitaPanelProps) {
   const [documentoAbierto, setDocumentoAbierto] = useState<EvidenciaVisita | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const [generando, setGenerando] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; type: 'success' | 'error'; message: string }>({
     show: false,
     type: 'success',
     message: '',
   });
-  const conformidadesEnviadas = useConformidades();
-  const conformidadEnviada = conformidadesEnviadas.get(detalle.claveConformidad);
+  const conformidadesGeneradas = useConformidades();
+  const conformidadGenerada = conformidadesGeneradas.get(detalle.claveConformidad);
 
-  const correoCliente = cliente?.correoElectronico.trim() ?? '';
-  const puedeGenerar = detalle.reporteEnviado && correoCliente !== '' && !enviando;
+  const puedeGenerar = detalle.reporteEnviado && cliente !== null && !generando;
 
+  // Genera el PDF y lo descarga; el envío al cliente se hace fuera del sistema.
   const handleGenerarConformidad = async () => {
     if (!cliente || !puedeGenerar) return;
-    setEnviando(true);
+    setGenerando(true);
     try {
       const datos = armarDatosConformidad(detalle, cliente, detalle.numeroVisita);
       const { generarPdfConformidad } = await import('./generarConformidadPdf');
       const archivo = await generarPdfConformidad(datos);
-      await enviarConformidad(datos, archivo);
-      registrarConformidadEnviada(detalle.claveConformidad, {
-        correo: correoCliente,
-        nombreArchivo: nombreArchivoConformidad(datos),
-        pdf: archivo,
-      });
-      setToast({ show: true, type: 'success', message: `Documento de conformidad enviado a ${correoCliente}` });
+      const nombreArchivo = nombreArchivoConformidad(datos);
+      descargarConformidad(archivo, nombreArchivo);
+      registrarConformidadGenerada(detalle.claveConformidad, { nombreArchivo, pdf: archivo });
+      setToast({ show: true, type: 'success', message: 'Documento de conformidad generado y descargado' });
     } catch (error) {
       setToast({
         show: true,
         type: 'error',
-        message: error instanceof Error ? error.message : 'No se pudo enviar el documento de conformidad',
+        message: error instanceof Error ? error.message : 'No se pudo generar el documento de conformidad',
       });
     } finally {
-      setEnviando(false);
+      setGenerando(false);
     }
   };
 
@@ -153,19 +150,21 @@ export default function DetalleVisitaPanel({ detalle, cliente, onCerrar }: Detal
           disabled={!puedeGenerar}
           className="flex items-center justify-center gap-2 px-5 py-2 bg-[#2A317A] text-white text-sm font-medium rounded-full hover:bg-[#1C2257] transition-all shadow-sm cursor-pointer disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
         >
-          <Mail size={16} />
-          {enviando ? 'Generando y enviando…' : conformidadEnviada ? 'Reenviar documento de conformidad' : 'Generar documento de conformidad'}
+          <Download size={16} />
+          {generando ? 'Generando…' : conformidadGenerada ? 'Volver a descargar la conformidad' : 'Generar documento de conformidad'}
         </button>
         {!detalle.reporteEnviado && (
           <p className="text-sm text-slate-500">Se habilita cuando el técnico envíe el reporte de esta visita.</p>
         )}
-        {detalle.reporteEnviado && correoCliente === '' && (
-          <p className="text-sm text-red-600">El cliente no tiene un correo electrónico registrado.</p>
+        {detalle.reporteEnviado && !conformidadGenerada && (
+          <p className="text-sm text-slate-500">
+            Se descarga el PDF para que lo envíes al cliente{cliente?.correoElectronico ? ` (${cliente.correoElectronico})` : ''} por tu correo.
+          </p>
         )}
-        {conformidadEnviada && (
+        {conformidadGenerada && (
           <p className="flex items-center gap-1.5 text-sm text-emerald-700">
             <CheckCircle2 size={14} />
-            Enviado el {conformidadEnviada.enviadaEn} a {conformidadEnviada.correo}
+            Generada el {conformidadGenerada.generadaEn}
           </p>
         )}
       </div>

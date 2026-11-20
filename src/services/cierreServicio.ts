@@ -1,8 +1,8 @@
 import { aDatosCotizacion, obtenerCotizacionesDeSolicitud, type CotizacionDeSolicitud } from './cotizaciones';
-import type { ConformidadEnviada } from './conformidad';
+import type { ConformidadGenerada } from './conformidad';
 import { detalleVisitaDiagnostico, detalleVisitaProgramada, type DetalleVisita } from './detalleVisita';
 import { formatearMonto, type SolicitudServicio } from './solicitudes';
-import type { EvidenciaVisita, VisitaTecnica } from './visitas';
+import type { VisitaTecnica } from './visitas';
 import { ordenarPorFechaHora, type VisitaProgramada } from './visitasProgramadas';
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
@@ -31,7 +31,7 @@ export interface DatosCierre {
   visita: VisitaTecnica;
   solicitud: SolicitudServicio | undefined;
   programadas: VisitaProgramada[];
-  conformidades: ReadonlyMap<string, ConformidadEnviada>;
+  conformidades: ReadonlyMap<string, ConformidadGenerada>;
 }
 
 const sinSeparadores = (nombre: string) => nombre.replace(/[\\/]+/g, '-');
@@ -51,24 +51,14 @@ const conNombresUnicos = (archivos: ArchivoCierre[]): ArchivoCierre[] => {
   });
 };
 
-// Los archivos que subió el técnico viven como URL de blob en el navegador.
-const leerArchivo = async (nombre: string, url: string): Promise<ArchivoCierre> => {
-  const respuesta = await fetch(url);
-  if (!respuesta.ok) throw new Error(`No se pudo leer el archivo "${nombre}"`);
-  return { nombre: sinSeparadores(nombre), contenido: await respuesta.blob() };
-};
-
-const leerEvidencias = (prefijo: string, evidencias: EvidenciaVisita[]) =>
-  Promise.all(evidencias.map((e) => leerArchivo(`${prefijo} - ${e.nombre}`, e.url)));
-
-const textoConformidad = (conformidad: ConformidadEnviada | undefined) =>
-  conformidad ? `Enviada el ${conformidad.enviadaEn} a ${conformidad.correo}` : 'No se envió desde el sistema';
+const textoConformidad = (conformidad: ConformidadGenerada | undefined) =>
+  conformidad ? `Generada el ${conformidad.generadaEn}` : 'No se generó desde el sistema';
 
 const construirReporte = (
   visita: VisitaTecnica,
   detalles: DetalleVisita[],
   cotizaciones: CotizacionDeSolicitud[],
-  conformidades: ReadonlyMap<string, ConformidadEnviada>,
+  conformidades: ReadonlyMap<string, ConformidadGenerada>,
 ): DatosReporteServicio => ({
   numeroServicio: visita.visitaId,
   clienteNombre: visita.clienteNombre,
@@ -98,9 +88,9 @@ const construirReporte = (
   ],
 });
 
-// Reúne todos los archivos del servicio: reporte resumen, evidencias del diagnóstico y de cada visita,
-// cotizaciones y documentos de conformidad. La oferta del técnico no va aquí: al aceptarla el backend
-// ya la movió a la carpeta del servicio.
+// Reúne los archivos que genera el sistema al cerrar: reporte resumen, cotizaciones y documentos de conformidad. La oferta del
+// técnico no va aquí (al aceptarla el backend ya la movió a la carpeta del servicio) ni las evidencias del diagnóstico y de
+// cada visita: el técnico las sube a Drive al registrarlas, en la subcarpeta Evidencias de esa misma carpeta.
 export const reunirArchivosDelServicio = async (datos: DatosCierre): Promise<ArchivoCierre[]> => {
   const { visita, solicitud, programadas, conformidades } = datos;
   const ordenadas = ordenarPorFechaHora(programadas);
@@ -112,17 +102,6 @@ export const reunirArchivosDelServicio = async (datos: DatosCierre): Promise<Arc
 
   const cotizaciones = solicitud ? await obtenerCotizacionesDeSolicitud(solicitud.solicitudId) : [];
   const { generarPdfCotizacion, generarPdfReporteServicio } = await import('../components/generarPdfsCierre');
-
-  const evidencias = [
-    ...(visita.diagnostico ? await leerEvidencias('Diagnóstico', visita.diagnostico.evidencias) : []),
-    ...(
-      await Promise.all(
-        ordenadas.map((vp) =>
-          leerEvidencias(detalleVisitaProgramada(visita, vp, programadas).nombre, vp.avance?.evidencias ?? [])
-        )
-      )
-    ).flat(),
-  ];
 
   const archivosCotizacion = await Promise.all(
     cotizaciones.map(async (c) => ({
@@ -141,7 +120,7 @@ export const reunirArchivosDelServicio = async (datos: DatosCierre): Promise<Arc
     contenido: await generarPdfReporteServicio(construirReporte(visita, detalles, cotizaciones, conformidades)),
   };
 
-  return conNombresUnicos([reporte, ...evidencias, ...archivosCotizacion, ...archivosConformidad]);
+  return conNombresUnicos([reporte, ...archivosCotizacion, ...archivosConformidad]);
 };
 
 const leerError = async (respuesta: Response, porDefecto: string) => {

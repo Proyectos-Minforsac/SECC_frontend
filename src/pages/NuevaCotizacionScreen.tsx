@@ -975,11 +975,11 @@ export const NuevaCotizacionScreen = () => {
                   </div>
                 )}
 
-                <p className="text-sm text-slate-300 pt-2">
+                {/* <p className="text-sm text-slate-300 pt-2">
                   {esJefe
                     ? 'Como jefe, la cotización queda validada al guardar y podrás descargar su PDF.'
                     : 'Al guardar, la cotización se envía al jefe para su validación. Podrás descargar el PDF cuando la valide.'}
-                </p>
+                </p> */}
 
                 {/* Botones de acción inferiores */}
                 <div className="flex justify-end items-center gap-5 pt-2">

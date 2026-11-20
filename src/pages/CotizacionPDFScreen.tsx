@@ -68,8 +68,9 @@ export default function CotizacionPdfScreen() {
      }
 
      const nombreArchivo = `Cotizacion-${data.numeroCotizacion ?? 'documento'}.pdf`;
+     const correoDestino = encodeURIComponent(data.correo ?? '');
      const asuntoCorreo = encodeURIComponent(`Cotización N° ${data.numeroCotizacion ?? ''} - Multiservicios Informáticos S.A.C`);
-     const mailtoHref = `mailto:${data.correo ?? ''}?subject=${asuntoCorreo}`;
+     const gmailHref = `https://mail.google.com/mail/?view=cm&fs=1&to=${correoDestino}&su=${asuntoCorreo}`;
 
      return (
           <div className="flex flex-1 bg-[#DCE4F3] font-sans antialiased text-white select-none">
@@ -104,11 +105,13 @@ export default function CotizacionPdfScreen() {
                               </PDFDownloadLink>
 
                               <a
-                              href={mailtoHref}
+                              href={gmailHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className={`flex items-center gap-2 px-6 py-2.5 text-white text-sm font-medium rounded-full transition-all shadow-md border border-white ${data.correo ? 'bg-[#4F46E5] hover:bg-[#4338CA] active:scale-95 cursor-pointer' : 'bg-gray-400 pointer-events-none opacity-60'}`}
                               >
                               <Mail className="w-4 h-4" />
-                                   Enviar por correo
+                                   Enviar por Gmail
                               </a>
 
                               <button

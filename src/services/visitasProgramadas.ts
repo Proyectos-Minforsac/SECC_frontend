@@ -1,6 +1,7 @@
 import type { EvidenciaVisita, TipoVisita } from './visitas';
 import type { ConceptoImprevisto } from './costosReales';
 import { pedir } from './http';
+import { conUrlCompleta } from './evidencias';
 
 // Imprevisto que el técnico avisa en su reporte (doble pasaje, material faltante...). No lleva monto: lo pone el trabajador.
 export interface AvisoImprevisto {
@@ -12,7 +13,12 @@ export interface AvisoImprevisto {
 export interface AvanceVisita {
   descripcion: string;
   evidencias: EvidenciaVisita[];
-  // Solo al guardar el reporte: el servidor no lo devuelve dentro del avance.
+}
+
+// Lo que escribe el técnico al guardar el avance. Las evidencias ya se subieron al servidor antes. El aviso de imprevisto
+// solo viaja al guardar: el servidor no lo devuelve dentro del avance.
+export interface NuevoAvance {
+  descripcion: string;
   imprevisto?: AvisoImprevisto;
 }
 
@@ -41,13 +47,10 @@ const listeners = new Set<() => void>();
 
 const emitirCambio = () => listeners.forEach((listener) => listener());
 
-// Las evidencias del avance (imágenes y documentos) todavía no se guardan en el backend. Se conservan en el
-// navegador mientras la pestaña siga abierta y se vuelven a unir a la visita cuando llega la versión del servidor.
-const evidenciasAvance = new Map<number, EvidenciaVisita[]>();
-
+// Las evidencias del avance las guarda el servidor (en Drive) y llegan con la visita; su URL es relativa a la API.
 const conEvidencias = (visita: VisitaProgramada): VisitaProgramada =>
   visita.avance
-    ? { ...visita, avance: { ...visita.avance, evidencias: evidenciasAvance.get(visita.visitaProgramadaId) ?? [] } }
+    ? { ...visita, avance: { ...visita.avance, evidencias: visita.avance.evidencias.map(conUrlCompleta) } }
     : visita;
 
 const guardarVisitaProgramada = (recibida: VisitaProgramada) => {
@@ -102,20 +105,18 @@ export const editarVisitaProgramada = async (
 export const eliminarVisitaProgramada = async (visitaProgramadaId: number) => {
   await pedir(`/visitas-programadas/${visitaProgramadaId}`, 'DELETE', undefined, 'No se pudo eliminar la visita');
   visitasProgramadas = visitasProgramadas.filter((v) => v.visitaProgramadaId !== visitaProgramadaId);
-  evidenciasAvance.delete(visitaProgramadaId);
   emitirCambio();
 }
 
-export const guardarAvanceVisitaProgramada = async (visitaProgramadaId: number, avance: AvanceVisita) => {
-  const visita = await pedir<VisitaProgramada>(
-    `/visitas-programadas/${visitaProgramadaId}/avance`,
-    'POST',
-    { descripcion: avance.descripcion, ...(avance.imprevisto ? { imprevisto: avance.imprevisto } : {}) },
-    'No se pudo guardar el avance de la visita'
+export const guardarAvanceVisitaProgramada = async (visitaProgramadaId: number, avance: NuevoAvance) =>
+  guardarVisitaProgramada(
+    await pedir<VisitaProgramada>(
+      `/visitas-programadas/${visitaProgramadaId}/avance`,
+      'POST',
+      { descripcion: avance.descripcion, ...(avance.imprevisto ? { imprevisto: avance.imprevisto } : {}) },
+      'No se pudo guardar el avance de la visita'
+    )
   );
-  evidenciasAvance.set(visitaProgramadaId, avance.evidencias);
-  return guardarVisitaProgramada(visita);
-}
 
 export const ordenarPorFechaHora = (lista: VisitaProgramada[]) =>
   [...lista].sort((a, b) => `${a.fecha}${a.horaInicio}`.localeCompare(`${b.fecha}${b.horaInicio}`));

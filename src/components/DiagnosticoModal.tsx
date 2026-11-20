@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import AgregarEditarModal from './Modal';
-import type { DiagnosticoVisita, EvidenciaVisita } from '../services/visitas';
+import SelectorEvidencias from './SelectorEvidencias';
+import type { EvidenciaVisita, NuevoDiagnostico } from '../services/visitas';
+import { quitarEvidencia } from '../services/evidencias';
 
 interface DiagnosticoModalProps {
   isOpen: boolean;
   clienteNombre: string;
+  // Servicio al que se adjuntan las evidencias del diagnóstico
+  visitaId: number | null;
   onClose: () => void;
-  onGuardar: (diagnostico: DiagnosticoVisita) => void;
+  onGuardar: (diagnostico: NuevoDiagnostico) => void;
   guardando?: boolean;
 }
 
-export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGuardar, guardando = false }: DiagnosticoModalProps) {
+export default function DiagnosticoModal({ isOpen, clienteNombre, visitaId, onClose, onGuardar, guardando = false }: DiagnosticoModalProps) {
   const [descripcion, setDescripcion] = useState('');
   const [componente, setComponente] = useState('');
   const [componentes, setComponentes] = useState<string[]>([]);
@@ -28,9 +32,11 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
     }
   }, [isOpen]);
 
-  // Al cancelar se liberan las imágenes; al guardar pasan a la visita y se conservan.
+  // Los archivos ya se subieron al elegirlos: al cancelar se quitan del servidor; al guardar quedan con el diagnóstico.
   const cerrar = () => {
-    evidencias.forEach((e) => URL.revokeObjectURL(e.url));
+    evidencias.forEach((e) => {
+      if (e.evidenciaId !== undefined) quitarEvidencia(e.evidenciaId).catch(() => undefined);
+    });
     onClose();
   }
 
@@ -40,25 +46,6 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
     setComponentes((prev) => [...prev, nombre]);
     setComponente('');
     setError('');
-  }
-
-  const agregarImagenes = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const archivos = Array.from(e.target.files ?? []);
-    setEvidencias((prev) => [
-      ...prev,
-      ...archivos.map((archivo) => ({
-        nombre: archivo.name,
-        url: URL.createObjectURL(archivo),
-        subidoEn: new Date().toISOString(),
-      })),
-    ]);
-    // Permite volver a elegir el mismo archivo después de quitarlo
-    e.target.value = '';
-  }
-
-  const quitarImagen = (indice: number) => {
-    URL.revokeObjectURL(evidencias[indice].url);
-    setEvidencias((prev) => prev.filter((_, i) => i !== indice));
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,7 +58,7 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
     const listaComponentes = pendiente ? [...componentes, pendiente] : componentes;
     if (listaComponentes.length === 0) return setError('Ingresa al menos un componente necesario.');
 
-    onGuardar({ descripcion: descripcion.trim(), componentes: listaComponentes, evidencias });
+    onGuardar({ descripcion: descripcion.trim(), componentes: listaComponentes });
   }
 
   return (
@@ -133,38 +120,8 @@ export default function DiagnosticoModal({ isOpen, clienteNombre, onClose, onGua
           </ul>
         )}
 
-        <label className="text-white">Evidencias (imágenes)</label>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={agregarImagenes}
-          className="w-full bg-white rounded-full text-sm text-gray-800 shadow-sm cursor-pointer outline-none
-             file:mr-4 file:py-2.5 file:px-6 file:rounded-full file:border-0
-             file:text-sm file:font-semibold file:bg-gray-900 file:text-white
-             hover:file:bg-black file:cursor-pointer transition-colors"
-        />
-        {evidencias.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
-            {evidencias.map((evidencia, indice) => (
-              <div key={evidencia.url} className="relative">
-                <img
-                  src={evidencia.url}
-                  alt={evidencia.nombre}
-                  className="w-full h-20 object-cover rounded-xl shadow-sm bg-white"
-                />
-                <button
-                  type="button"
-                  aria-label={`Quitar ${evidencia.nombre}`}
-                  onClick={() => quitarImagen(indice)}
-                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 cursor-pointer hover:bg-black"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        <label className="text-white">Evidencias (imágenes, PDF o Word)</label>
+        {visitaId !== null && <SelectorEvidencias destino={{ visitaId }} evidencias={evidencias} onCambio={setEvidencias} deshabilitado={guardando} />}
 
         {error && <p className="text-sm text-red-300 text-center">{error}</p>}
 
