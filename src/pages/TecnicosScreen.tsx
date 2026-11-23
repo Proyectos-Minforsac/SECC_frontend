@@ -10,6 +10,7 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import Toast from "../components/Toast";
 import { ChevronDown } from "lucide-react";
 import { aceptarMontoNumero } from "../services/montos";
+import { TIPOS_SERVICIO } from "../services/solicitudes";
 
 const CAPACIDADES_AIRE = ["12K", "18K", "24K", "36K", "48K"] as const;
 
@@ -105,10 +106,10 @@ export default function TecnicosScreen() {
       return { error: "El teléfono debe tener 9 dígitos." };
     }
 
-    const esAire = tecnicoServicio === "Aire Condicionado";
+    const esAire = tecnicoServicio === "Aire Acondicionado";
 
     if (esAire && CAPACIDADES_AIRE.some((cap) => Number.isNaN(preciosAire[cap]) || preciosAire[cap] < 0)) {
-      return { error: "Los precios de aire condicionado no son válidos." };
+      return { error: "Los precios de aire acondicionado no son válidos." };
     }
 
     // Un precio en 0 no se registra: solo se envían los mayores a 0.
@@ -119,7 +120,7 @@ export default function TecnicosScreen() {
       : [];
 
     if (esAire && precios.length === 0) {
-      return { error: "Ingrese al menos un precio de aire condicionado mayor a 0." };
+      return { error: "Ingrese al menos un precio de aire acondicionado mayor a 0." };
     }
 
     return {
@@ -341,8 +342,9 @@ export default function TecnicosScreen() {
                   <option value="" disabled>
                     Servicio
                   </option>
-                  <option value="Aire Condicionado">Aire Condicionado</option>
-                  <option value="Cableado estructurado">Cableado estructurado</option>
+                  {TIPOS_SERVICIO.map((tipo) => (
+                    <option key={tipo} value={tipo}>{tipo}</option>
+                  ))}
                 </select>
                 <ChevronDown
                   size={16}
@@ -383,9 +385,9 @@ export default function TecnicosScreen() {
               </div>
             </div>
 
-            {tecnicoServicio === 'Aire Condicionado' && (
+            {tecnicoServicio === 'Aire Acondicionado' && (
               <div className="my-3">
-                <span className="text-white block font-medium">Precios de aire condicionado</span>
+                <span className="text-white block font-medium">Precios de aire acondicionado</span>
                 <div className="grid grid-cols-3 gap-3">
                   {CAPACIDADES_AIRE.map((cap) => (
                     <div key={cap} className="flex items-center gap-2 mt-3">

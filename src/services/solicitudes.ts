@@ -25,7 +25,15 @@ export interface AutorizacionViaje {
 
 // Son los mismos servicios que ofrecen los técnicos (campo "servicio" de Técnicos), para poder enviar la
 // solicitud solo a quienes lo prestan. Para agregar un tipo basta con sumarlo aquí y en el backend (solicitudModel).
-export const TIPOS_SERVICIO = ['Aire Condicionado', 'Cableado estructurado'] as const;
+export const TIPOS_SERVICIO = [
+  'Aire Acondicionado',
+  'Cableado estructurado',
+  'Redes y datos',
+  'Instalaciones eléctricas',
+  'Puesta a tierra',
+  'Ingeniería y planos',
+  'Obras civiles y adecuaciones',
+] as const;
 export type TipoServicio = (typeof TIPOS_SERVICIO)[number];
 
 export interface SolicitudServicio {
