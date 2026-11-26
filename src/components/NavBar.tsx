@@ -66,7 +66,7 @@ export default function NavBar({ menuContraido, onAlternarMenu }: NavBarProps) {
       </button>
 
       <div className="flex flex-col items-end leading-tight">
-        <span className="text-sm font-medium text-white">{usuario?.nombre}</span>
+        <span className="text-sm font-medium text-white">{usuario?.nombreCompleto}</span>
         <span className="text-sm text-gray-200">{usuario && ETIQUETA_ROL[usuario.rol]}</span>
       </div>
 

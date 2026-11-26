@@ -29,7 +29,8 @@ import {
 
 export default function VisitasTecnicoScreen() {
   const { usuario } = useAuth();
-  const tecnicoNombre = usuario?.nombre ?? "";
+  // El técnico se reconoce por su nombre completo, el mismo que tiene en la hoja de técnicos
+  const tecnicoNombre = usuario?.nombreCompleto ?? "";
 
   const visitas = useVisitas().filter((v) => v.tecnicoNombre === tecnicoNombre);
   const visitasProgramadas = useVisitasProgramadas();

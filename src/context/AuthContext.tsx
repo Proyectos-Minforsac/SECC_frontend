@@ -6,7 +6,10 @@ export type Rol = "trabajador" | "jefe" | "tecnico"
 
 export interface Usuario {
   usuarioId: number
+  // Nombre de usuario (con el que se inicia sesión)
   nombre: string
+  // Nombre que se muestra en pantalla. A un técnico se le reconoce por él (igual a su nombre en la hoja de técnicos)
+  nombreCompleto: string
   rol: Rol
 }
 

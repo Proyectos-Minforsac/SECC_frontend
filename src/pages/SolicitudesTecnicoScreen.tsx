@@ -16,7 +16,8 @@ import { MAX_BYTES } from "../services/evidencias"
 
 export default function SolicitudesTecnicoScreen() {
   const { usuario } = useAuth();
-  const tecnicoNombre = usuario?.nombre ?? "";
+  // El técnico se reconoce por su nombre completo, el mismo que tiene en la hoja de técnicos
+  const tecnicoNombre = usuario?.nombreCompleto ?? "";
 
   const todasLasSolicitudes = useSolicitudes();
   // Solo las solicitudes que el trabajador envió a este técnico

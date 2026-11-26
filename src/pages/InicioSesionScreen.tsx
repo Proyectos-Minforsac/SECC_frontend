@@ -22,7 +22,12 @@ export const LoginScreen = () => {
 
     try {
       const autenticado = await login(nombre.trim(), password);
-      iniciarSesion({ usuarioId: autenticado.usuarioId, nombre: autenticado.nombre, rol: autenticado.rol });
+      iniciarSesion({
+        usuarioId: autenticado.usuarioId,
+        nombre: autenticado.nombre,
+        nombreCompleto: autenticado.nombreCompleto || autenticado.nombre,
+        rol: autenticado.rol,
+      });
       navigate(RUTA_INICIO[autenticado.rol], { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');

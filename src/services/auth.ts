@@ -3,18 +3,20 @@ import type { Rol } from '../context/AuthContext';
 export interface UsuarioAutenticado {
   usuarioId: number;
   nombre: string;
+  nombreCompleto: string;
   rol: Rol;
 }
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 
-export async function login(nombre: string, contrasena: string): Promise<UsuarioAutenticado> {
+// Se inicia sesión con el nombre de usuario; la respuesta trae además el nombre completo para mostrarlo.
+export async function login(nombreUsuario: string, contrasena: string): Promise<UsuarioAutenticado> {
   const response = await fetch(`${apiBaseUrl}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ nombre, contrasena }),
+    body: JSON.stringify({ nombreUsuario, contrasena }),
   });
 
   if (!response.ok) {

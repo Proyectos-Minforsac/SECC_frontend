@@ -17,7 +17,9 @@ export const leerSesion = (): Usuario | null => {
     // esas personas deben iniciar sesión otra vez.
     if (!ROLES.includes(rol) || !Number.isInteger(datos?.usuarioId)) return null
 
-    return { usuarioId: datos.usuarioId, nombre: String(datos.nombre ?? ""), rol: rol as Rol }
+    // Las sesiones anteriores no guardaban el nombre completo: se muestra el nombre de usuario.
+    const nombre = String(datos.nombre ?? "")
+    return { usuarioId: datos.usuarioId, nombre, nombreCompleto: String(datos.nombreCompleto ?? "") || nombre, rol: rol as Rol }
   } catch {
     return null
   }

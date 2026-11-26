@@ -9,7 +9,8 @@ export function useNotificaciones() {
 
   return useSyncExternalStore(
     suscribirseANotificaciones,
-    () => (usuario ? obtenerNotificaciones(usuario.rol, usuario.nombre) : [])
+    // Los avisos para un técnico van dirigidos a su nombre completo (el de la hoja de técnicos)
+    () => (usuario ? obtenerNotificaciones(usuario.rol, usuario.nombreCompleto) : [])
   );
 }
 
@@ -18,7 +19,7 @@ export function useNotificaciones() {
 export function useSincronizarNotificaciones() {
   const { usuario } = useAuth();
   const rol = usuario?.rol;
-  const nombre = usuario?.nombre;
+  const nombre = usuario?.nombreCompleto;
 
   useEffect(() => {
     if (!rol || nombre === undefined) return;
